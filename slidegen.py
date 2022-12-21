@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Copyright © 2022 Noah Vogt <noah@noahvogt.com>
 
@@ -17,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from os import name, path
 from abc import ABC, abstractmethod
-from sys import argv, exit
+import sys
+import re
+
 from termcolor import colored
 import colorama
 
@@ -26,6 +30,7 @@ from wand.color import Color
 from wand.display import display
 from wand.drawing import Drawing
 from wand.font import Font
+from wand.exceptions import BlobError
 
 IMAGE_FORMAT = "jpeg"
 FILE_EXTENSION = "jpg"
@@ -90,7 +95,7 @@ METADATA_STRINGS = ("title", "book", "text", "melody", "structure")
 
 def error_msg(msg: str):
     print(colored("[*] Error: {}".format(msg), "red"))
-    exit(1)
+    sys.exit(1)
 
 
 def log(message: str):
@@ -402,11 +407,14 @@ class Slidegen:
             self.metadata["melody"],
         )
         start_slide_img.format = IMAGE_FORMAT
-        start_slide_img.save(
-            filename=path.join(
-                self.output_dir, FILE_NAMEING + "1." + FILE_EXTENSION
+        try:
+            start_slide_img.save(
+                filename=path.join(
+                    self.output_dir, FILE_NAMEING + "1." + FILE_EXTENSION
+                )
             )
-        )
+        except BlobError:
+            error_msg("could not write start slide to target directory")
         log("generating song slides...")
         for index, structure in enumerate(self.chosen_structure):
             log(
@@ -422,12 +430,15 @@ class Slidegen:
                 index,
             )
             song_slide_img.format = IMAGE_FORMAT
-            song_slide_img.save(
-                filename=path.join(
-                    self.output_dir,
-                    FILE_NAMEING + str(index + 2) + "." + FILE_EXTENSION,
+            try:
+                song_slide_img.save(
+                    filename=path.join(
+                        self.output_dir,
+                        FILE_NAMEING + str(index + 2) + "." + FILE_EXTENSION,
+                    )
                 )
-            )
+            except BlobError:
+                error_msg("could not write slide to target directory")
 
     def parse_file(self):
         self.parse_metadata()
@@ -435,14 +446,36 @@ class Slidegen:
 
     def parse_metadata(self):
         metadata_dict = dict.fromkeys(METADATA_STRINGS)
-        with open(self.song_file_path, mode="r", encoding="utf8") as opener:
-            content = strip_whitespace_list_entries(opener.readlines())
+        try:
+            with open(self.song_file_path, mode="r", encoding="utf8") as opener:
+                content = strip_whitespace_list_entries(opener.readlines())
+        except IOError:
+            error_msg(
+                "could not read the the song input file: '{}'".format(
+                    self.song_file_path
+                )
+            )
         valid_metadata_strings = list(METADATA_STRINGS)
 
         for line_nr, line in enumerate(content):
             if len(valid_metadata_strings) == 0:
                 content = content[line_nr:]
                 break
+            if not re.match("^\\S+: .+", line):
+                if line[-1] == "\n":
+                    line = line[:-1]
+                missing_metadata_strs = ""
+                for metadata_str in valid_metadata_strings:
+                    missing_metadata_strs += ", " + metadata_str
+                missing_metadata_strs = missing_metadata_strs[2:]
+                error_msg(
+                    "invalid metadata syntax on line {}:\n{}\nThe ".format(
+                        line_nr + 1, line
+                    )
+                    + "following metadata strings are still missing: {}".format(
+                        missing_metadata_strs
+                    )
+                )
             metadata_str = line[: line.index(":")]
             if metadata_str in valid_metadata_strings:
                 metadata_dict[metadata_str] = line[line.index(": ") + 2 : -1]
@@ -515,12 +548,12 @@ class Slidegen:
 
     def parse_argv(self):
         try:
-            self.song_file_path = argv[1]
-            self.output_dir = argv[2]
+            self.song_file_path = sys.argv[1]
+            self.output_dir = sys.argv[2]
         except IndexError:
-            error_msg("no arguments provided, exiting...")
+            error_msg("incorrect amount of arguments provided, exiting...")
         try:
-            self.chosen_structure = argv[3]
+            self.chosen_structure = sys.argv[3]
             if self.chosen_structure.strip() == "":
                 self.chosen_structure = ""
         except IndexError:
