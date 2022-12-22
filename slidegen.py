@@ -107,10 +107,6 @@ def get_empty_image() -> Image:
     return img.clone()
 
 
-def strip_whitespace_list_entries(input_list: list):
-    return [entry for entry in input_list if entry.strip()]
-
-
 def structure_as_list(structure: str) -> list:
     return structure.replace(" ", "").split(",")
 
@@ -448,7 +444,7 @@ class Slidegen:
         metadata_dict = dict.fromkeys(METADATA_STRINGS)
         try:
             with open(self.song_file_path, mode="r", encoding="utf8") as opener:
-                content = strip_whitespace_list_entries(opener.readlines())
+                content = opener.readlines()
         except IOError:
             error_msg(
                 "could not read the the song input file: '{}'".format(
@@ -461,7 +457,10 @@ class Slidegen:
             if len(valid_metadata_strings) == 0:
                 content = content[line_nr:]
                 break
-            if not re.match("^\\S+: .+", line):
+            if not re.match(
+                r"^(?!structure)\S+: .+|^structure: ([0-9]+|R)(,([0-9]+|R))+$",
+                line,
+            ):
                 if line[-1] == "\n":
                     line = line[:-1]
                 missing_metadata_strs = ""
