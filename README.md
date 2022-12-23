@@ -94,13 +94,14 @@ These are some issues and possible changes that will be addressed or at least co
 - prevent all crashes:
     - safe `PROMPT_INPUT` parsing
     - handle possibly incorrect or insensible configurations safely
-- prevent long and many lines from cutting off text in the slide
 - integrating [ssync](https://github.com/noahvogt/ssync) into this (and hence a single) repo
+- asynchronous slide generation
+- use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would slidegen cause to terminate unsuccessfully
 - better packaging and modularisation
 - add more optional metadata strings
-- add a maximum character limit config for metadata values
 - use a more typical commandline argument system
+- add more documentation, especially explaining the slide generation and its Configuration
 
 ## Licensing
 

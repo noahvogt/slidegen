@@ -38,10 +38,10 @@ FILE_NAMEING = "folie"
 
 WIDTH = 1920
 HEIGHT = 1080
-BG_COLOR = Color("white")
-FG_COLOR = Color("#6298a4")
+BG_COLOR = "white"
+FG_COLOR = "#6298a4"
 
-TITLE_COLOR = Color("#d8d5c4")
+TITLE_COLOR = "#d8d5c4"
 MAX_TITLE_FONT_SIZE = 70
 MIN_TITLE_FONT_SIZE = 20
 TITLE_FONT_SIZE_STEP = 10
@@ -72,13 +72,16 @@ TRIANGLE_HEIGTH = 160
 
 METADATA_FONT_SIZE = 36
 METADATA_X = 70
+METADATA_VALUE_CHAR_LIMIT = 100
 BOOK_Y = 260
 ATTRIBUTIONS_Y = 930
 
-TEXT_COLOR = Color("black")
+TEXT_COLOR = "black"
 
-VERSE_X = 80
-VERSE_Y = 400
+STRUCTURE_ELEMENT_X = 80
+STRUCTURE_ELEMENT_Y = 400
+STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT = 85
+STRUCTURE_ELEMENT_MAX_LINES = 8
 TEXT_CANVAS_X = 160
 TEXT_CANVAS_Y = 400
 TEXT_CANVAS_WIDTH = 1600
@@ -89,6 +92,12 @@ MAX_CANVAS_FONT_SIZE = 55
 MIN_CANVAS_FONT_SIZE = 35
 CANVAS_FONT_SIZE_STEP = 5
 INTERLINE_SPACING = 30
+
+ARROW_HEIGHT = 50
+ARROW_COLOR = "black"
+
+ARROW_X = 1725
+ARROW_Y = 900
 
 METADATA_STRINGS = ("title", "book", "text", "melody", "structure")
 
@@ -116,11 +125,20 @@ def get_unique_structure_elements(structure: list) -> list:
 
 
 def get_songtext_by_structure(content: list, structure: str) -> str:
-    found_desired_structure = False
-    output_str = ""
+    found_desired_structure: bool = False
+    output_str: str = ""
 
     for line in content:
-        stripped_line = line.strip()
+        stripped_line: str = line.strip()
+        line_length: int = len(line)
+        if line_length > STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT:
+            if line[-1] == "\n":
+                line = line[:-1]
+            error_msg(
+                "line is configured to a character limit of "
+                + str(STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT)
+                + " but has {} characters: \n{}".format(line_length, line)
+            )
         if found_desired_structure:
             if stripped_line.startswith("[") and stripped_line.endswith("]"):
                 break
@@ -131,7 +149,7 @@ def get_songtext_by_structure(content: list, structure: str) -> str:
             and stripped_line.endswith("]")
             and structure in stripped_line
         ):
-            found_desired_structure = True
+            found_desired_structure: bool = True
 
     return output_str[:-1]
 
@@ -162,6 +180,7 @@ class SongSlide(ABC):
         slide_text: str,
         song_structure: list,
         index: int,
+        useArrow: bool,
     ):
         pass
 
@@ -173,6 +192,7 @@ class ClassicSongSlide(SongSlide):
         slide_text: str,
         song_structure: list,
         index: int,
+        useArrow: bool,
     ):
         canvas_img, font_size = self.get_text_canvas(slide_text)
         verse_or_chorus = song_structure[index]
@@ -180,28 +200,60 @@ class ClassicSongSlide(SongSlide):
         if "R" not in verse_or_chorus:
             bg_img.composite(
                 self.get_index(verse_or_chorus, font_size),
-                top=VERSE_Y,
-                left=VERSE_X,
+                top=STRUCTURE_ELEMENT_Y,
+                left=STRUCTURE_ELEMENT_X,
             )
         bg_img.composite(canvas_img, top=TEXT_CANVAS_Y, left=TEXT_CANVAS_X)
+        if useArrow:
+            bg_img.composite(self.get_arrow(), top=ARROW_Y, left=ARROW_X)
         bg_img.composite(
             self.get_structure_info_display(song_structure, index),
             top=STRUCTURE_Y,
             left=STRUCTURE_X,
         )
-        return bg_img
+        return bg_img.clone()
+
+    def get_arrow(self) -> Image:
+        with Drawing() as draw:
+            draw.stroke_width = 1
+            draw.stroke_color = Color(ARROW_COLOR)
+            draw.fill_color = Color(ARROW_COLOR)
+            arrow_width = ARROW_HEIGHT * 3 // 2
+
+            draw.path_start()
+            draw.path_move(to=(0, ARROW_HEIGHT / 2 - ARROW_HEIGHT / 10))
+            draw.path_line(to=(0, ARROW_HEIGHT / 2 + ARROW_HEIGHT / 10))
+            draw.path_line(
+                to=(arrow_width / 3 * 2, ARROW_HEIGHT / 2 + ARROW_HEIGHT / 10)
+            )
+            draw.path_line(to=(arrow_width / 3 * 2, ARROW_HEIGHT))
+            draw.path_line(to=(arrow_width, ARROW_HEIGHT / 2))
+            draw.path_line(to=(arrow_width / 3 * 2, 0))
+            draw.path_line(
+                to=(arrow_width / 3 * 2, ARROW_HEIGHT / 2 - ARROW_HEIGHT / 10)
+            )
+            draw.path_close()
+            draw.path_finish()
+
+            with Image(
+                width=arrow_width,
+                height=ARROW_HEIGHT,
+                background=Color(BG_COLOR),
+            ) as image:
+                draw(image)
+                return image.clone()
 
     def get_text_canvas(self, slide_text: str) -> tuple:
         font_size = MAX_CANVAS_FONT_SIZE
         while font_size >= MIN_CANVAS_FONT_SIZE:
             with Drawing() as draw:
-                draw.fill_color = TEXT_COLOR
+                draw.fill_color = Color(TEXT_COLOR)
                 draw.text_interline_spacing = INTERLINE_SPACING
                 draw.font_size = font_size
                 draw.font = FONT
                 draw.text(0, font_size, slide_text)
                 with Image(
-                    width=WIDTH, height=HEIGHT, background=BG_COLOR
+                    width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
                 ) as img:
                     draw(img)
                     img.trim()
@@ -210,14 +262,13 @@ class ClassicSongSlide(SongSlide):
                         or img.height > TEXT_CANVAS_HEIGHT
                     ):
                         font_size -= CANVAS_FONT_SIZE_STEP
-                        display(img)
                     else:
                         return img.clone(), font_size
         return get_empty_image(), 0
 
     def get_structure_info_display(self, structure: list, index: int) -> Image:
         with Drawing() as draw:
-            draw.fill_color = TEXT_COLOR
+            draw.fill_color = Color(TEXT_COLOR)
             draw.font_size = INFODISPLAY_FONT_SIZE
             draw.font = FONT
             for current_index, item in enumerate(structure):
@@ -235,17 +286,21 @@ class ClassicSongSlide(SongSlide):
                         INFODISPLAY_FONT_SIZE,
                         item,
                     )
-            with Image(width=WIDTH, height=HEIGHT, background=BG_COLOR) as img:
+            with Image(
+                width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
+            ) as img:
                 draw(img)
                 img.trim()
 
                 return img.clone()
 
     def get_index(self, verse: str, font_size: int) -> Image:
-        with Image(width=WIDTH, height=HEIGHT, background=BG_COLOR) as img:
+        with Image(
+            width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
+        ) as img:
             img.caption(
                 verse + ".",
-                font=Font(FONT_PATH, size=font_size, color=TEXT_COLOR),
+                font=Font(FONT_PATH, size=font_size, color=Color(TEXT_COLOR)),
             )
             img.trim()
             return img.clone()
@@ -269,10 +324,14 @@ class ClassicStartSlide(StartSlide):
         return start_img.clone()
 
     def get_metadata(self, text: str) -> Image:
-        with Image(width=WIDTH, height=HEIGHT, background=BG_COLOR) as img:
+        with Image(
+            width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
+        ) as img:
             img.caption(
                 text,
-                font=Font(FONT_PATH, size=METADATA_FONT_SIZE, color=TEXT_COLOR),
+                font=Font(
+                    FONT_PATH, size=METADATA_FONT_SIZE, color=Color(TEXT_COLOR)
+                ),
             )
             img.trim()
             return img.clone()
@@ -293,23 +352,25 @@ class ClassicSongTemplate(SongTemplate):
         self.song_template = ""
 
     def get_base_image(self) -> Image:
-        with Image(width=WIDTH, height=HEIGHT, background=BG_COLOR) as img:
+        with Image(
+            width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
+        ) as img:
             return img.clone()
 
     def get_titlebar_rectangle(self, text: str) -> Image:
         font_size = MAX_TITLE_FONT_SIZE
         while font_size >= MIN_TITLE_FONT_SIZE:
             with Image(
-                width=WIDTH, height=TITLE_HEIGHT, background=FG_COLOR
+                width=WIDTH, height=TITLE_HEIGHT, background=Color(FG_COLOR)
             ) as img:
                 img.caption(
                     text,
                     font=Font(
-                        BOLD_FONT_PATH, size=font_size, color=TITLE_COLOR
+                        BOLD_FONT_PATH, size=font_size, color=Color(TITLE_COLOR)
                     ),
                 )
                 img.trim()
-                img.border(color=FG_COLOR, width=30, height=0)
+                img.border(color=Color(FG_COLOR), width=30, height=0)
                 trimmed_img_width = img.width
                 trimmed_img_height = img.height
                 concat_height = int((TITLE_HEIGHT - trimmed_img_height) / 2)
@@ -319,14 +380,14 @@ class ClassicSongTemplate(SongTemplate):
                 concatenated_img = Image(
                     width=trimmed_img_width,
                     height=concat_height,
-                    background=FG_COLOR,
+                    background=Color(FG_COLOR),
                 )
                 concatenated_img.sequence.append(img)
                 concatenated_img.sequence.append(
                     Image(
                         width=trimmed_img_width,
                         height=concat_height + correction_heigt,
-                        background=FG_COLOR,
+                        background=Color(FG_COLOR),
                     )
                 )
                 concatenated_img.concat(stacked=True)
@@ -350,7 +411,7 @@ class ClassicSongTemplate(SongTemplate):
 
     def get_titlebar_triangle(self) -> Image:
         with Drawing() as draw:
-            draw.fill_color = FG_COLOR
+            draw.fill_color = Color(FG_COLOR)
             draw.path_start()
             draw.path_move(to=(TRIANGLE_WIDTH, 0))
             draw.path_line(to=(0, 0))
@@ -361,7 +422,7 @@ class ClassicSongTemplate(SongTemplate):
             with Image(
                 width=TRIANGLE_WIDTH,
                 height=TRIANGLE_HEIGTH,
-                background=BG_COLOR,
+                background=Color(BG_COLOR),
             ) as img:
                 draw(img)
                 return img.clone()
@@ -411,30 +472,97 @@ class Slidegen:
             )
         except BlobError:
             error_msg("could not write start slide to target directory")
+
         log("generating song slides...")
+        # unique_structures: list = list(set(self.chosen_structure))
+
+        # count number of slides to be generated
+        slide_count: int = 0
+        for structure in self.chosen_structure:
+            line_count: int = len(self.songtext[structure].splitlines())
+            if line_count > STRUCTURE_ELEMENT_MAX_LINES:
+                slide_count += line_count // STRUCTURE_ELEMENT_MAX_LINES + 1
+            else:
+                slide_count += 1
+
+        current_slide_index: int = 0
+
         for index, structure in enumerate(self.chosen_structure):
-            log(
-                "generating song slide [{} / {}]...".format(
-                    index + 1, len(self.chosen_structure)
+            structure_element_splitted: list = self.songtext[
+                structure
+            ].splitlines()
+            line_count = len(structure_element_splitted)
+            use_line_ranges_per_index = []
+            use_lines_per_index = []
+            if line_count <= STRUCTURE_ELEMENT_MAX_LINES:
+                inner_slide_count = 1
+            else:
+                inner_slide_count: int = (
+                    line_count // STRUCTURE_ELEMENT_MAX_LINES + 1
                 )
-            )
-            song_slide = self.song_slide_form()
-            song_slide_img = song_slide.get_slide(
-                template_img,
-                self.songtext[structure],
-                self.chosen_structure,
-                index,
-            )
-            song_slide_img.format = IMAGE_FORMAT
-            try:
-                song_slide_img.save(
-                    filename=path.join(
-                        self.output_dir,
-                        FILE_NAMEING + str(index + 2) + "." + FILE_EXTENSION,
+                use_lines_per_index = [
+                    line_count // inner_slide_count
+                ] * inner_slide_count
+
+                for inner_slide in range(inner_slide_count):
+                    if sum(use_lines_per_index) == line_count:
+                        break
+                    use_lines_per_index[inner_slide] = (
+                        use_lines_per_index[inner_slide] + 1
+                    )
+                for inner_slide in range(inner_slide_count):
+                    use_line_ranges_per_index.append(
+                        sum(use_lines_per_index[:inner_slide])
+                    )
+
+            for inner_slide in range(inner_slide_count):
+                current_slide_index += 1
+
+                log(
+                    "generating song slide [{} / {}]...".format(
+                        current_slide_index, slide_count
                     )
                 )
-            except BlobError:
-                error_msg("could not write slide to target directory")
+
+                if inner_slide_count == 1:
+                    structure_element_value: str = self.songtext[structure]
+                else:
+                    splitted_wanted_range: list = structure_element_splitted[
+                        use_line_ranges_per_index[
+                            inner_slide
+                        ] : use_line_ranges_per_index[inner_slide]
+                        + use_lines_per_index[inner_slide]
+                    ]
+                    structure_element_value: str = ""
+                    for element in splitted_wanted_range:
+                        structure_element_value += element + "\n"
+
+                    structure_element_value = structure_element_value[:-1]
+
+                song_slide = self.song_slide_form()
+                song_slide_img = song_slide.get_slide(
+                    template_img,
+                    structure_element_value,
+                    self.chosen_structure,
+                    index,
+                    bool(
+                        inner_slide_count != 1
+                        and inner_slide != inner_slide_count - 1
+                    ),
+                )
+                song_slide_img.format = IMAGE_FORMAT
+                try:
+                    song_slide_img.save(
+                        filename=path.join(
+                            self.output_dir,
+                            FILE_NAMEING
+                            + str(current_slide_index + 1)
+                            + "."
+                            + FILE_EXTENSION,
+                        )
+                    )
+                except BlobError:
+                    error_msg("could not write slide to target directory")
 
     def parse_file(self):
         self.parse_metadata()
