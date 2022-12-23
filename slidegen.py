@@ -17,422 +17,35 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from os import name, path
-from abc import ABC, abstractmethod
-import sys
+from os import path
 import re
+import sys
 
-from termcolor import colored
 import colorama
 
-from wand.image import Image
-from wand.color import Color
-from wand.display import display
-from wand.drawing import Drawing
-from wand.font import Font
 from wand.exceptions import BlobError
 
-IMAGE_FORMAT = "jpeg"
-FILE_EXTENSION = "jpg"
-FILE_NAMEING = "folie"
-
-WIDTH = 1920
-HEIGHT = 1080
-BG_COLOR = "white"
-FG_COLOR = "#6298a4"
-
-TITLE_COLOR = "#d8d5c4"
-MAX_TITLE_FONT_SIZE = 70
-MIN_TITLE_FONT_SIZE = 20
-TITLE_FONT_SIZE_STEP = 10
-TITLE_HEIGHT = 160
-TITLEBAR_Y = 65
-
-INFODISPLAY_FONT_SIZE = 25
-INFODISPLAY_ITEM_WIDTH = 20
-
-PLAYER_WIDTH = 560
-PLAYER_HEIGHT = 315
-
-BOLD_FONT_PATH = (
-    "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
-    if name == "posix"
-    else "winPATH"
+from utils import (
+    log,
+    error_msg,
+    get_songtext_by_structure,
+    structure_as_list,
+    get_unique_structure_elements,
 )
-FONT_PATH = (
-    "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
-    if name == "posix"
-    else "winPATH"
-)
-FONT = "Century-Gothic"
-BOLD_FONT = "Century-Gothic-Bold"
 
-TRIANGLE_WIDTH = 80
-TRIANGLE_HEIGTH = 160
+from slides import ClassicSongTemplate, ClassicStartSlide, ClassicSongSlide
 
-METADATA_FONT_SIZE = 36
-METADATA_X = 70
-METADATA_VALUE_CHAR_LIMIT = 100
-BOOK_Y = 260
-ATTRIBUTIONS_Y = 930
-
-TEXT_COLOR = "black"
-
-STRUCTURE_ELEMENT_X = 80
-STRUCTURE_ELEMENT_Y = 400
-STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT = 85
-STRUCTURE_ELEMENT_MAX_LINES = 8
-TEXT_CANVAS_X = 160
-TEXT_CANVAS_Y = 400
-TEXT_CANVAS_WIDTH = 1600
-TEXT_CANVAS_HEIGHT = 600
-STRUCTURE_X = 1650
-STRUCTURE_Y = 1000
-MAX_CANVAS_FONT_SIZE = 55
-MIN_CANVAS_FONT_SIZE = 35
-CANVAS_FONT_SIZE_STEP = 5
-INTERLINE_SPACING = 30
-
-ARROW_HEIGHT = 50
-ARROW_COLOR = "black"
-
-ARROW_X = 1725
-ARROW_Y = 900
-
-METADATA_STRINGS = ("title", "book", "text", "melody", "structure")
-
-
-def error_msg(msg: str):
-    print(colored("[*] Error: {}".format(msg), "red"))
-    sys.exit(1)
-
-
-def log(message: str):
-    print(colored("[*] {}".format(message), "green"))
-
-
-def get_empty_image() -> Image:
-    img = Image(width=1, height=1, background=Color("white"))
-    return img.clone()
-
-
-def structure_as_list(structure: str) -> list:
-    return structure.replace(" ", "").split(",")
-
-
-def get_unique_structure_elements(structure: list) -> list:
-    return list(dict.fromkeys(structure))
-
-
-def get_songtext_by_structure(content: list, structure: str) -> str:
-    found_desired_structure: bool = False
-    output_str: str = ""
-
-    for line in content:
-        stripped_line: str = line.strip()
-        line_length: int = len(line)
-        if line_length > STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT:
-            if line[-1] == "\n":
-                line = line[:-1]
-            error_msg(
-                "line is configured to a character limit of "
-                + str(STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT)
-                + " but has {} characters: \n{}".format(line_length, line)
-            )
-        if found_desired_structure:
-            if stripped_line.startswith("[") and stripped_line.endswith("]"):
-                break
-            output_str += stripped_line + "\n"
-
-        if (
-            stripped_line.startswith("[")
-            and stripped_line.endswith("]")
-            and structure in stripped_line
-        ):
-            found_desired_structure: bool = True
-
-    return output_str[:-1]
-
-
-class SongTemplate(ABC):
-    @abstractmethod
-    def get_template(self, title: str) -> Image:
-        pass
-
-
-class StartSlide(ABC):
-    @abstractmethod
-    def get_slide(
-        self,
-        template_img: Image,
-        book: str,
-        text_author: str,
-        melody_author: str,
-    ):
-        pass
-
-
-class SongSlide(ABC):
-    @abstractmethod
-    def get_slide(
-        self,
-        template_img: Image,
-        slide_text: str,
-        song_structure: list,
-        index: int,
-        useArrow: bool,
-    ):
-        pass
-
-
-class ClassicSongSlide(SongSlide):
-    def get_slide(
-        self,
-        template_img: Image,
-        slide_text: str,
-        song_structure: list,
-        index: int,
-        useArrow: bool,
-    ):
-        canvas_img, font_size = self.get_text_canvas(slide_text)
-        verse_or_chorus = song_structure[index]
-        bg_img = template_img.clone()
-        if "R" not in verse_or_chorus:
-            bg_img.composite(
-                self.get_index(verse_or_chorus, font_size),
-                top=STRUCTURE_ELEMENT_Y,
-                left=STRUCTURE_ELEMENT_X,
-            )
-        bg_img.composite(canvas_img, top=TEXT_CANVAS_Y, left=TEXT_CANVAS_X)
-        if useArrow:
-            bg_img.composite(self.get_arrow(), top=ARROW_Y, left=ARROW_X)
-        bg_img.composite(
-            self.get_structure_info_display(song_structure, index),
-            top=STRUCTURE_Y,
-            left=STRUCTURE_X,
-        )
-        return bg_img.clone()
-
-    def get_arrow(self) -> Image:
-        with Drawing() as draw:
-            draw.stroke_width = 1
-            draw.stroke_color = Color(ARROW_COLOR)
-            draw.fill_color = Color(ARROW_COLOR)
-            arrow_width = ARROW_HEIGHT * 3 // 2
-
-            draw.path_start()
-            draw.path_move(to=(0, ARROW_HEIGHT / 2 - ARROW_HEIGHT / 10))
-            draw.path_line(to=(0, ARROW_HEIGHT / 2 + ARROW_HEIGHT / 10))
-            draw.path_line(
-                to=(arrow_width / 3 * 2, ARROW_HEIGHT / 2 + ARROW_HEIGHT / 10)
-            )
-            draw.path_line(to=(arrow_width / 3 * 2, ARROW_HEIGHT))
-            draw.path_line(to=(arrow_width, ARROW_HEIGHT / 2))
-            draw.path_line(to=(arrow_width / 3 * 2, 0))
-            draw.path_line(
-                to=(arrow_width / 3 * 2, ARROW_HEIGHT / 2 - ARROW_HEIGHT / 10)
-            )
-            draw.path_close()
-            draw.path_finish()
-
-            with Image(
-                width=arrow_width,
-                height=ARROW_HEIGHT,
-                background=Color(BG_COLOR),
-            ) as image:
-                draw(image)
-                return image.clone()
-
-    def get_text_canvas(self, slide_text: str) -> tuple:
-        font_size = MAX_CANVAS_FONT_SIZE
-        while font_size >= MIN_CANVAS_FONT_SIZE:
-            with Drawing() as draw:
-                draw.fill_color = Color(TEXT_COLOR)
-                draw.text_interline_spacing = INTERLINE_SPACING
-                draw.font_size = font_size
-                draw.font = FONT
-                draw.text(0, font_size, slide_text)
-                with Image(
-                    width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
-                ) as img:
-                    draw(img)
-                    img.trim()
-                    if (
-                        img.width > TEXT_CANVAS_WIDTH
-                        or img.height > TEXT_CANVAS_HEIGHT
-                    ):
-                        font_size -= CANVAS_FONT_SIZE_STEP
-                    else:
-                        return img.clone(), font_size
-        return get_empty_image(), 0
-
-    def get_structure_info_display(self, structure: list, index: int) -> Image:
-        with Drawing() as draw:
-            draw.fill_color = Color(TEXT_COLOR)
-            draw.font_size = INFODISPLAY_FONT_SIZE
-            draw.font = FONT
-            for current_index, item in enumerate(structure):
-                if current_index == index:
-                    draw.font = BOLD_FONT
-                    draw.text(
-                        current_index * INFODISPLAY_ITEM_WIDTH,
-                        INFODISPLAY_FONT_SIZE,
-                        item,
-                    )
-                    draw.font = FONT
-                else:
-                    draw.text(
-                        current_index * INFODISPLAY_ITEM_WIDTH,
-                        INFODISPLAY_FONT_SIZE,
-                        item,
-                    )
-            with Image(
-                width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
-            ) as img:
-                draw(img)
-                img.trim()
-
-                return img.clone()
-
-    def get_index(self, verse: str, font_size: int) -> Image:
-        with Image(
-            width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
-        ) as img:
-            img.caption(
-                verse + ".",
-                font=Font(FONT_PATH, size=font_size, color=Color(TEXT_COLOR)),
-            )
-            img.trim()
-            return img.clone()
-
-
-class ClassicStartSlide(StartSlide):
-    def get_slide(
-        self,
-        template_img: Image,
-        book: str,
-        text_author: str,
-        melody_author: str,
-    ):
-        start_img = template_img.clone()
-        start_img.composite(
-            self.get_attributions(text_author, melody_author),
-            left=METADATA_X,
-            top=ATTRIBUTIONS_Y,
-        )
-        start_img.composite(self.get_book(book), left=METADATA_X, top=BOOK_Y)
-        return start_img.clone()
-
-    def get_metadata(self, text: str) -> Image:
-        with Image(
-            width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
-        ) as img:
-            img.caption(
-                text,
-                font=Font(
-                    FONT_PATH, size=METADATA_FONT_SIZE, color=Color(TEXT_COLOR)
-                ),
-            )
-            img.trim()
-            return img.clone()
-
-    def get_attributions(self, text_author: str, melody_author: str) -> Image:
-        if text_author == melody_author:
-            return self.get_metadata("Text & Melodie: " + text_author)
-        return self.get_metadata(
-            "Text: " + text_author + "\nMelodie: " + melody_author
-        )
-
-    def get_book(self, book: str) -> Image:
-        return self.get_metadata(book)
-
-
-class ClassicSongTemplate(SongTemplate):
-    def __init__(self):
-        self.song_template = ""
-
-    def get_base_image(self) -> Image:
-        with Image(
-            width=WIDTH, height=HEIGHT, background=Color(BG_COLOR)
-        ) as img:
-            return img.clone()
-
-    def get_titlebar_rectangle(self, text: str) -> Image:
-        font_size = MAX_TITLE_FONT_SIZE
-        while font_size >= MIN_TITLE_FONT_SIZE:
-            with Image(
-                width=WIDTH, height=TITLE_HEIGHT, background=Color(FG_COLOR)
-            ) as img:
-                img.caption(
-                    text,
-                    font=Font(
-                        BOLD_FONT_PATH, size=font_size, color=Color(TITLE_COLOR)
-                    ),
-                )
-                img.trim()
-                img.border(color=Color(FG_COLOR), width=30, height=0)
-                trimmed_img_width = img.width
-                trimmed_img_height = img.height
-                concat_height = int((TITLE_HEIGHT - trimmed_img_height) / 2)
-                correction_heigt = (
-                    TRIANGLE_HEIGTH - trimmed_img_height - (2 * concat_height)
-                )
-                concatenated_img = Image(
-                    width=trimmed_img_width,
-                    height=concat_height,
-                    background=Color(FG_COLOR),
-                )
-                concatenated_img.sequence.append(img)
-                concatenated_img.sequence.append(
-                    Image(
-                        width=trimmed_img_width,
-                        height=concat_height + correction_heigt,
-                        background=Color(FG_COLOR),
-                    )
-                )
-                concatenated_img.concat(stacked=True)
-                if concatenated_img.width > (
-                    WIDTH - PLAYER_WIDTH - TRIANGLE_WIDTH
-                ):
-                    font_size -= TITLE_FONT_SIZE_STEP
-                    continue
-
-                return concatenated_img.clone()
-        return get_empty_image()
-
-    def get_template(self, title: str) -> Image:
-        titlebar_rectangle = self.get_titlebar_rectangle(title)
-        titlebar_rectangle.sequence.append(self.get_titlebar_triangle())
-        titlebar_rectangle.concat(stacked=False)
-        base_img = self.get_base_image()
-        base_img.composite(titlebar_rectangle, top=TITLEBAR_Y)
-        self.song_template = base_img.clone()
-        return base_img.clone()
-
-    def get_titlebar_triangle(self) -> Image:
-        with Drawing() as draw:
-            draw.fill_color = Color(FG_COLOR)
-            draw.path_start()
-            draw.path_move(to=(TRIANGLE_WIDTH, 0))
-            draw.path_line(to=(0, 0))
-            draw.path_line(to=(0, TRIANGLE_HEIGTH))
-            draw.path_close()
-            draw.path_finish()
-
-            with Image(
-                width=TRIANGLE_WIDTH,
-                height=TRIANGLE_HEIGTH,
-                background=Color(BG_COLOR),
-            ) as img:
-                draw(img)
-                return img.clone()
-
-    def display(self):
-        display(self.song_template)
+try:
+    import config.config as const  # pyright: ignore [reportMissingImports]
+except ModuleNotFoundError:
+    log("no costom config found, using defaults")
+    import config.default_config as const
 
 
 class Slidegen:
-    def __init__(self, song_template_form, start_slide_form, song_slide_form):
+    def __init__(
+        self, song_template_form, start_slide_form, song_slide_form
+    ) -> None:
         self.metadata: dict = {"": ""}
         self.songtext: dict = {"": ""}
         self.song_file_path: str = ""
@@ -445,12 +58,12 @@ class Slidegen:
         self.song_slide_form = song_slide_form
         self.parse_argv()
 
-    def execute(self):
+    def execute(self) -> None:
         self.parse_file()
         self.calculate_desired_structures()
         self.generate_slides()
 
-    def generate_slides(self):
+    def generate_slides(self) -> None:
         song_template = self.song_template_form()
         log("generating template...")
         template_img = song_template.get_template(self.metadata["title"])
@@ -463,11 +76,12 @@ class Slidegen:
             self.metadata["text"],
             self.metadata["melody"],
         )
-        start_slide_img.format = IMAGE_FORMAT
+        start_slide_img.format = const.IMAGE_FORMAT
         try:
             start_slide_img.save(
                 filename=path.join(
-                    self.output_dir, FILE_NAMEING + "1." + FILE_EXTENSION
+                    self.output_dir,
+                    const.FILE_NAMEING + "1." + const.FILE_EXTENSION,
                 )
             )
         except BlobError:
@@ -480,8 +94,10 @@ class Slidegen:
         slide_count: int = 0
         for structure in self.chosen_structure:
             line_count: int = len(self.songtext[structure].splitlines())
-            if line_count > STRUCTURE_ELEMENT_MAX_LINES:
-                slide_count += line_count // STRUCTURE_ELEMENT_MAX_LINES + 1
+            if line_count > const.STRUCTURE_ELEMENT_MAX_LINES:
+                slide_count += (
+                    line_count // const.STRUCTURE_ELEMENT_MAX_LINES + 1
+                )
             else:
                 slide_count += 1
 
@@ -494,11 +110,11 @@ class Slidegen:
             line_count = len(structure_element_splitted)
             use_line_ranges_per_index = []
             use_lines_per_index = []
-            if line_count <= STRUCTURE_ELEMENT_MAX_LINES:
+            if line_count <= const.STRUCTURE_ELEMENT_MAX_LINES:
                 inner_slide_count = 1
             else:
                 inner_slide_count: int = (
-                    line_count // STRUCTURE_ELEMENT_MAX_LINES + 1
+                    line_count // const.STRUCTURE_ELEMENT_MAX_LINES + 1
                 )
                 use_lines_per_index = [
                     line_count // inner_slide_count
@@ -550,26 +166,26 @@ class Slidegen:
                         and inner_slide != inner_slide_count - 1
                     ),
                 )
-                song_slide_img.format = IMAGE_FORMAT
+                song_slide_img.format = const.IMAGE_FORMAT
                 try:
                     song_slide_img.save(
                         filename=path.join(
                             self.output_dir,
-                            FILE_NAMEING
+                            const.FILE_NAMEING
                             + str(current_slide_index + 1)
                             + "."
-                            + FILE_EXTENSION,
+                            + const.FILE_EXTENSION,
                         )
                     )
                 except BlobError:
                     error_msg("could not write slide to target directory")
 
-    def parse_file(self):
+    def parse_file(self) -> None:
         self.parse_metadata()
         self.parse_songtext()
 
-    def parse_metadata(self):
-        metadata_dict = dict.fromkeys(METADATA_STRINGS)
+    def parse_metadata(self) -> None:
+        metadata_dict = dict.fromkeys(const.METADATA_STRINGS)
         try:
             with open(self.song_file_path, mode="r", encoding="utf8") as opener:
                 content = opener.readlines()
@@ -579,7 +195,7 @@ class Slidegen:
                     self.song_file_path
                 )
             )
-        valid_metadata_strings = list(METADATA_STRINGS)
+        valid_metadata_strings = list(const.METADATA_STRINGS)
 
         for line_nr, line in enumerate(content):
             if len(valid_metadata_strings) == 0:
@@ -614,7 +230,7 @@ class Slidegen:
         self.metadata = metadata_dict
         self.song_file_content = content
 
-    def parse_songtext(self):
+    def parse_songtext(self) -> None:
         unique_structures = get_unique_structure_elements(
             structure_as_list(self.metadata["structure"])
         )
@@ -627,7 +243,7 @@ class Slidegen:
 
         self.songtext = output_dict
 
-    def calculate_desired_structures(self):
+    def calculate_desired_structures(self) -> None:
         full_structure_str = str(self.metadata["structure"])
         full_structure_list = structure_as_list(full_structure_str)
         if len(self.chosen_structure) == 0:
@@ -673,7 +289,7 @@ class Slidegen:
         self.chosen_structure = full_structure_list[start_index : end_index + 1]
         log("chosen structure: {}".format(str(self.chosen_structure)))
 
-    def parse_argv(self):
+    def parse_argv(self) -> None:
         try:
             self.song_file_path = sys.argv[1]
             self.output_dir = sys.argv[2]
@@ -689,10 +305,10 @@ class Slidegen:
         log("parsing {}...".format(self.song_file_path))
 
 
-def main():
+def main() -> None:
     colorama.init()
 
-    slidegen = Slidegen(
+    slidegen: Slidegen = Slidegen(
         ClassicSongTemplate, ClassicStartSlide, ClassicSongSlide
     )
     slidegen.execute()
