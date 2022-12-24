@@ -18,7 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from wand.image import Image
 from wand.color import Color
 
+import config as const
+
 
 def get_empty_image() -> Image:
-    img = Image(width=1, height=1, background=Color("white"))
+    img = Image(width=1, height=1, background=Color(const.BG_COLOR))
     return img.clone()

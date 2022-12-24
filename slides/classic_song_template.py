@@ -20,14 +20,11 @@ from wand.drawing import Drawing
 from wand.color import Color
 from wand.font import Font
 
-from .song_template import SongTemplate
-
 from utils import get_empty_image
 
-try:
-    import config.config as const  # pyright: ignore [reportMissingImports]
-except ModuleNotFoundError:
-    import config.default_config as const
+import config as const
+
+from .song_template import SongTemplate
 
 
 class ClassicSongTemplate(SongTemplate):

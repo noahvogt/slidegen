@@ -15,10 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-try:
-    import config.config as const  # pyright: ignore [reportMissingImports]
-except ModuleNotFoundError:
-    import config.default_config as const
+import config as const
 
 from .log import error_msg
 

@@ -85,7 +85,12 @@ Here is a example of a text body using the first three verses of *'Amazing Grace
 
 ### Configuration
 
-As of now, all Configuration is handled via constants in `slidegen.py`, which will change in the future. See the roadmap below.
+The configuration of *slidegen* is handled via constants in `*.py` files. The default configuration is stored in `config/default_config.py`, and in the same form a custom user-defined configuration can optionally be placed in `config/config.py`. You don't have to specify all the constants present in the default config, only the one's you want to change.
+
+For example, if you want to change the text color to green and the file extension the jpeg, your `config/config.py` could look like this:
+
+    TEXT_COLOR = "green"
+    FILE_EXTENSION = "jpeg"
 
 ## Roadmap
 
@@ -101,7 +106,8 @@ These are some issues and possible changes that will be addressed or at least co
 - better packaging and modularisation
 - add more optional metadata strings
 - use a more typical commandline argument system
-- add more documentation, especially explaining the slide generation and its Configuration
+- add more documentation, especially explaining the slide generation and its configuration
+- better handling of font path Configuration
 
 ## Licensing
 

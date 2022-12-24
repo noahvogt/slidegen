@@ -19,12 +19,9 @@ from wand.image import Image
 from wand.color import Color
 from wand.font import Font
 
-from .start_slide import StartSlide
+import config as const
 
-try:
-    import config.config as const  # pyright: ignore [reportMissingImports]
-except ModuleNotFoundError:
-    import config.default_config as const
+from .start_slide import StartSlide
 
 
 class ClassicStartSlide(StartSlide):

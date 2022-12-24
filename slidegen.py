@@ -35,11 +35,7 @@ from utils import (
 
 from slides import ClassicSongTemplate, ClassicStartSlide, ClassicSongSlide
 
-try:
-    import config.config as const  # pyright: ignore [reportMissingImports]
-except ModuleNotFoundError:
-    log("no costom config found, using defaults")
-    import config.default_config as const
+import config as const
 
 
 class Slidegen:

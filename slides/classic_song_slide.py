@@ -20,13 +20,9 @@ from wand.drawing import Drawing
 from wand.font import Font
 from wand.color import Color
 
+import config as const
+
 from .song_slide import SongSlide
-
-
-try:
-    import config.config as const  # pyright: ignore [reportMissingImports]
-except ModuleNotFoundError:
-    import config.default_config as const
 
 
 class ClassicSongSlide(SongSlide):

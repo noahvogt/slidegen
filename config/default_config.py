@@ -15,11 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from os import name
-
 IMAGE_FORMAT = "jpeg"
 FILE_EXTENSION = "jpg"
-FILE_NAMEING = "folie"
+FILE_NAMEING = "slide"
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -39,16 +37,8 @@ INFODISPLAY_ITEM_WIDTH = 20
 PLAYER_WIDTH = 560
 PLAYER_HEIGHT = 315
 
-BOLD_FONT_PATH = (
-    "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
-    if name == "posix"
-    else "winPATH"
-)
-FONT_PATH = (
-    "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
-    if name == "posix"
-    else "winPATH"
-)
+BOLD_FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
+FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
 FONT = "Century-Gothic"
 BOLD_FONT = "Century-Gothic-Bold"
 
