@@ -47,6 +47,8 @@ def get_songtext_by_structure(content: list, structure: str) -> str:
         ):
             found_desired_structure: bool = True
 
+    if not found_desired_structure:
+        error_msg("could not find structure '{}'".format(structure))
     return output_str[:-1]
 
 
