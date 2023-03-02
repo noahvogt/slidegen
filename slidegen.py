@@ -24,6 +24,7 @@ import sys
 import colorama
 
 from wand.exceptions import BlobError
+from wand.image import Image
 
 from utils import (
     log,
@@ -59,34 +60,7 @@ class Slidegen:
         self.calculate_desired_structures()
         self.generate_slides()
 
-    def generate_slides(self) -> None:
-        song_template = self.song_template_form()
-        log("generating template...")
-        template_img = song_template.get_template(self.metadata["title"])
-
-        first_slide = self.start_slide_form()
-        log("generating start slide...")
-        start_slide_img = first_slide.get_slide(
-            template_img,
-            self.metadata["book"],
-            self.metadata["text"],
-            self.metadata["melody"],
-        )
-        start_slide_img.format = const.IMAGE_FORMAT
-        try:
-            start_slide_img.save(
-                filename=path.join(
-                    self.output_dir,
-                    const.FILE_NAMEING + "1." + const.FILE_EXTENSION,
-                )
-            )
-        except BlobError:
-            error_msg("could not write start slide to target directory")
-
-        log("generating song slides...")
-        # unique_structures: list = list(set(self.chosen_structure))
-
-        # count number of slides to be generated
+    def count_number_of_slides_to_be_generated(self) -> int:
         slide_count: int = 0
         for structure in self.chosen_structure:
             line_count: int = len(self.songtext[structure].splitlines())
@@ -96,6 +70,28 @@ class Slidegen:
                 )
             else:
                 slide_count += 1
+
+        return slide_count
+
+    def generate_slides(self) -> None:
+        template_img: Image = self.generate_song_template()
+
+        slide_count: int = self.count_number_of_slides_to_be_generated()
+        zfill_length: int = len(str(slide_count))
+
+        self.generate_start_slide(template_img, zfill_length)
+        self.generate_song_slides(slide_count, template_img, zfill_length)
+
+    def generate_song_template(self) -> Image:
+        song_template = self.song_template_form()
+        log("generating template...")
+        return song_template.get_template(self.metadata["title"])
+
+    def generate_song_slides(
+        self, slide_count, template_img, zfill_length
+    ) -> None:
+        log("generating song slides...")
+        # unique_structures: list = list(set(self.chosen_structure))
 
         current_slide_index: int = 0
 
@@ -168,13 +164,37 @@ class Slidegen:
                         filename=path.join(
                             self.output_dir,
                             const.FILE_NAMEING
-                            + str(current_slide_index + 1)
+                            + str(current_slide_index + 1).zfill(zfill_length)
                             + "."
                             + const.FILE_EXTENSION,
                         )
                     )
                 except BlobError:
                     error_msg("could not write slide to target directory")
+
+    def generate_start_slide(self, template_img, zfill_length) -> None:
+        log("generating start slide...")
+
+        first_slide = self.start_slide_form()
+        start_slide_img = first_slide.get_slide(
+            template_img,
+            self.metadata["book"],
+            self.metadata["text"],
+            self.metadata["melody"],
+        )
+        start_slide_img.format = const.IMAGE_FORMAT
+        try:
+            start_slide_img.save(
+                filename=path.join(
+                    self.output_dir,
+                    const.FILE_NAMEING
+                    + "1".zfill(zfill_length)
+                    + "."
+                    + const.FILE_EXTENSION,
+                )
+            )
+        except BlobError:
+            error_msg("could not write start slide to target directory")
 
     def parse_file(self) -> None:
         self.parse_metadata()
@@ -198,7 +218,7 @@ class Slidegen:
                 content = content[line_nr:]
                 break
             if not re.match(
-                r"^(?!structure)\S+: .+|^structure: ([0-9]+|R)(,([0-9]+|R))+$",
+                r"^(?!structure)\S+: .+|^structure: ([0-9]+|R)(,([0-9]+|R))*$",
                 line,
             ):
                 if line[-1] == "\n":

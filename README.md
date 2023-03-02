@@ -47,7 +47,7 @@ As the top of the file are these five metadata entries. We call them *metadata s
 
 As for the syntax, each line starts with the metadata string, followed by *": "*, and ends with a non-empty string that acts as the value of the metadata string, which we call *metadata value*.  The `structure` is allowed only `R` and non-negative integers values separated by one comma each, which represents the structure or order in which to song is to be played by dividing the song into refrain and verses. The values in between the commas are called *structure elements*.
 
-Hence to check if a line in the header has the correct syntax use the following regular expression: `^(?!structure)\S+: .+|^structure: ([0-9]+|R)(,([0-9]+|R))+$`. What is not captured syntactically by this regex is that each metadata string and value pair must appear *exactly once* in the header.
+Hence to check if a line in the header has the correct syntax use the following regular expression: `^(?!structure)\S+: .+|^structure: ([0-9]+|R)(,([0-9]+|R))*$`. What is not captured syntactically by this regex is that each metadata string and value pair must appear *exactly once* in the header.
 
 The semantics of the other metadata values can be pretty much whatever you want, as long as they adhere to the syntax. Note also that the arrangement of lines doesn't have to match the list above, e.g. the line with the book metadata string can be above the line containing the title metadata, but note that it is probably better to not mix this up anyway for quicker manual editing's sake.
 
@@ -85,12 +85,60 @@ Here is a example of a text body using the first three verses of *'Amazing Grace
 
 ### Configuration
 
-The configuration of *slidegen* is handled via constants in `*.py` files. The default configuration is stored in `config/default_config.py`, and in the same form a custom user-defined configuration can optionally be placed in `config/config.py`. You don't have to specify all the constants present in the default config, only the one's you want to change.
+The configuration of `slidegen.py` is handled via constants in `*.py` files. The default configuration is stored in `config/default_config.py`, and in the same form a custom user-defined configuration can optionally be placed in `config/config.py`. You don't have to specify all the constants present in the default config, only the one's you want to change.
 
 For example, if you want to change the text color to green and the file extension the jpeg, your `config/config.py` could look like this:
 
-    TEXT_COLOR = "green"
-    FILE_EXTENSION = "jpeg"
+```python
+TEXT_COLOR = "green"
+FILE_EXTENSION = "jpeg"
+```
+
+Now for explanation of the individual entries.
+
+#### File Format and Naming
+
+`IMAGE_FORMAT` forces a specific file format when writing the files in formats accepted by ImageMagick. The individual slides get named in this form: `${IMAGE_FORMAT}${SLIDE_NUMBER}${FILE_EXTENSION}`. Hence with the default config of
+
+```python
+IMAGE_FORMAT = "jpeg"
+FILE_EXTENSION = "jpg"
+FILE_NAMEING = "slide"
+```
+
+the slides would be named `slide1.jpg`, `slide2.jpg`, `slide3.jpg` etc.
+
+#### Dimensions
+
+`WIDTH` and `HEIGHT` present the output resolution of the slide in pixels. Meaning for 4K slides you would have to use
+
+```python
+WIDTH = 3840
+HEIGHT = 2160
+```
+
+#### General Colors
+
+Now let us look at the start slide. With `BG_COLOR` we can set the background for all slides and `FG_COLOR` sets the color of the what we call *titlebar*. Note the color values are again in the typical form accepted by ImageMagick.
+
+```python
+BG_COLOR = "white"
+FG_COLOR = "#6298a4"
+```
+
+![example: start slide](media/start-slide-example.jpg)
+
+#### Titlebar
+
+```python
+TITLE_COLOR = "#d8d5c4"
+MAX_TITLE_FONT_SIZE = 70
+MIN_TITLE_FONT_SIZE = 20
+TITLE_FONT_SIZE_STEP = 10
+TITLE_HEIGHT = 160
+TITLEBAR_Y = 65
+```
+
 
 ## Roadmap
 
@@ -108,6 +156,7 @@ These are some issues and possible changes that will be addressed or at least co
 - use a more typical commandline argument system
 - add more documentation, especially explaining the slide generation and its configuration
 - better handling of font path Configuration
+- add tests
 
 ## Licensing
 
