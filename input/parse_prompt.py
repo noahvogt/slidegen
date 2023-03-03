@@ -22,25 +22,25 @@ from utils import (
 )
 
 
-def parse_input(full_song_structure: str, chosen_structure: list | str) -> list:
-    full_structure_list = structure_as_list(full_song_structure)
-    if len(chosen_structure) == 0:
-        log("chosen structure: {}".format(str(chosen_structure)))
-        return structure_as_list(full_song_structure)
-    if not "-" in chosen_structure:
-        log("chosen structure: {}".format(str(chosen_structure)))
-        return structure_as_list(str(chosen_structure))
+def parse_prompt_input(slidegen) -> list:
+    full_structure_list = structure_as_list(slidegen.metadata["structure"])
+    if len(slidegen.chosen_structure) == 0:
+        log("chosen structure: {}".format(str(slidegen.chosen_structure)))
+        return structure_as_list(slidegen.metadata["structure"])
+    if not "-" in slidegen.chosen_structure:
+        log("chosen structure: {}".format(str(slidegen.chosen_structure)))
+        return structure_as_list(str(slidegen.chosen_structure))
 
-    dash_index = str(chosen_structure).find("-")
-    start_verse = str(chosen_structure[:dash_index]).strip()
-    end_verse = str(chosen_structure[dash_index + 1 :]).strip()
+    dash_index = str(slidegen.chosen_structure).find("-")
+    start_verse = str(slidegen.chosen_structure[:dash_index]).strip()
+    end_verse = str(slidegen.chosen_structure[dash_index + 1 :]).strip()
 
     try:
         if int(start_verse) >= int(end_verse):
             error_msg("{} < {} must be true".format(start_verse, end_verse))
-        if start_verse not in full_song_structure:
+        if start_verse not in slidegen.metadata["structure"]:
             error_msg("structure {} unknown".format(start_verse))
-        if end_verse not in full_song_structure:
+        if end_verse not in slidegen.metadata["structure"]:
             error_msg("structure {} unknown".format(end_verse))
     except (ValueError, IndexError):
         error_msg("please choose a valid integer for the song structure")
@@ -60,5 +60,5 @@ def parse_input(full_song_structure: str, chosen_structure: list | str) -> list:
         ):
             end_index += 1
 
-    log("chosen structure: {}".format(str(chosen_structure)))
+    log("chosen structure: {}".format(str(slidegen.chosen_structure)))
     return full_structure_list[start_index : end_index + 1]

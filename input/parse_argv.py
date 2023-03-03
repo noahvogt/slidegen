@@ -15,15 +15,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .song_template import SongTemplate
-from .start_slide import StartSlide
-from .song_slide import SongSlide
+import sys
 
-from .classic_song_template import ClassicSongTemplate
-from .classic_start_slide import ClassicStartSlide
-from .classic_song_slide import ClassicSongSlide
+from utils import log, error_msg
 
-from .engine.start_slide import generate_start_slide
-from .engine.song_slides import generate_song_slides
-from .engine.song_template import generate_song_template
-from .engine.calc_slide_count import count_number_of_slides_to_be_generated
+
+def parse_argv(slidegen) -> None:
+    try:
+        slidegen.song_file_path = sys.argv[1]
+        slidegen.output_dir = sys.argv[2]
+    except IndexError:
+        error_msg("incorrect amount of arguments provided, exiting...")
+    try:
+        slidegen.chosen_structure = sys.argv[3]
+        if slidegen.chosen_structure.strip() == "":
+            slidegen.chosen_structure = ""
+    except IndexError:
+        slidegen.chosen_structure = ""
+
+    log("parsing {}...".format(slidegen.song_file_path))
