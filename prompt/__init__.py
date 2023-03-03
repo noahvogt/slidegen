@@ -15,14 +15,4 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .song_template import SongTemplate
-from .start_slide import StartSlide
-from .song_slide import SongSlide
-
-from .classic_song_template import ClassicSongTemplate
-from .classic_start_slide import ClassicStartSlide
-from .classic_song_slide import ClassicSongSlide
-
-from .engine.start_slide import generate_start_slide
-from .engine.song_slides import generate_song_slides
-from .engine.song_template import generate_song_template
+from .input import parse_input

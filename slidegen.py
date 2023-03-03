@@ -17,13 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from os import path
 import re
 import sys
 
 import colorama
 
-from wand.exceptions import BlobError
 from wand.image import Image
 
 from utils import (
@@ -34,9 +32,18 @@ from utils import (
     get_unique_structure_elements,
 )
 
-from slides import ClassicSongTemplate, ClassicStartSlide, ClassicSongSlide
+from slides import (
+    ClassicSongTemplate,
+    ClassicStartSlide,
+    ClassicSongSlide,
+    generate_start_slide,
+    generate_song_slides,
+    generate_song_template,
+)
 
 import config as const
+
+from prompt import parse_input
 
 
 class Slidegen:
@@ -74,127 +81,13 @@ class Slidegen:
         return slide_count
 
     def generate_slides(self) -> None:
-        template_img: Image = self.generate_song_template()
+        template_img: Image = generate_song_template(self)
 
         slide_count: int = self.count_number_of_slides_to_be_generated()
         zfill_length: int = len(str(slide_count))
 
-        self.generate_start_slide(template_img, zfill_length)
-        self.generate_song_slides(slide_count, template_img, zfill_length)
-
-    def generate_song_template(self) -> Image:
-        song_template = self.song_template_form()
-        log("generating template...")
-        return song_template.get_template(self.metadata["title"])
-
-    def generate_song_slides(
-        self, slide_count, template_img, zfill_length
-    ) -> None:
-        log("generating song slides...")
-        # unique_structures: list = list(set(self.chosen_structure))
-
-        current_slide_index: int = 0
-
-        for index, structure in enumerate(self.chosen_structure):
-            structure_element_splitted: list = self.songtext[
-                structure
-            ].splitlines()
-            line_count = len(structure_element_splitted)
-            use_line_ranges_per_index = []
-            use_lines_per_index = []
-            if line_count <= const.STRUCTURE_ELEMENT_MAX_LINES:
-                inner_slide_count = 1
-            else:
-                inner_slide_count: int = (
-                    line_count // const.STRUCTURE_ELEMENT_MAX_LINES + 1
-                )
-                use_lines_per_index = [
-                    line_count // inner_slide_count
-                ] * inner_slide_count
-
-                for inner_slide in range(inner_slide_count):
-                    if sum(use_lines_per_index) == line_count:
-                        break
-                    use_lines_per_index[inner_slide] = (
-                        use_lines_per_index[inner_slide] + 1
-                    )
-                for inner_slide in range(inner_slide_count):
-                    use_line_ranges_per_index.append(
-                        sum(use_lines_per_index[:inner_slide])
-                    )
-
-            for inner_slide in range(inner_slide_count):
-                current_slide_index += 1
-
-                log(
-                    "generating song slide [{} / {}]...".format(
-                        current_slide_index, slide_count
-                    )
-                )
-
-                if inner_slide_count == 1:
-                    structure_element_value: str = self.songtext[structure]
-                else:
-                    splitted_wanted_range: list = structure_element_splitted[
-                        use_line_ranges_per_index[
-                            inner_slide
-                        ] : use_line_ranges_per_index[inner_slide]
-                        + use_lines_per_index[inner_slide]
-                    ]
-                    structure_element_value: str = ""
-                    for element in splitted_wanted_range:
-                        structure_element_value += element + "\n"
-
-                    structure_element_value = structure_element_value[:-1]
-
-                song_slide = self.song_slide_form()
-                song_slide_img = song_slide.get_slide(
-                    template_img,
-                    structure_element_value,
-                    self.chosen_structure,
-                    index,
-                    bool(
-                        inner_slide_count != 1
-                        and inner_slide != inner_slide_count - 1
-                    ),
-                )
-                song_slide_img.format = const.IMAGE_FORMAT
-                try:
-                    song_slide_img.save(
-                        filename=path.join(
-                            self.output_dir,
-                            const.FILE_NAMEING
-                            + str(current_slide_index + 1).zfill(zfill_length)
-                            + "."
-                            + const.FILE_EXTENSION,
-                        )
-                    )
-                except BlobError:
-                    error_msg("could not write slide to target directory")
-
-    def generate_start_slide(self, template_img, zfill_length) -> None:
-        log("generating start slide...")
-
-        first_slide = self.start_slide_form()
-        start_slide_img = first_slide.get_slide(
-            template_img,
-            self.metadata["book"],
-            self.metadata["text"],
-            self.metadata["melody"],
-        )
-        start_slide_img.format = const.IMAGE_FORMAT
-        try:
-            start_slide_img.save(
-                filename=path.join(
-                    self.output_dir,
-                    const.FILE_NAMEING
-                    + "1".zfill(zfill_length)
-                    + "."
-                    + const.FILE_EXTENSION,
-                )
-            )
-        except BlobError:
-            error_msg("could not write start slide to target directory")
+        generate_start_slide(self, template_img, zfill_length)
+        generate_song_slides(self, slide_count, template_img, zfill_length)
 
     def parse_file(self) -> None:
         self.parse_metadata()
@@ -260,50 +153,9 @@ class Slidegen:
         self.songtext = output_dict
 
     def calculate_desired_structures(self) -> None:
-        full_structure_str = str(self.metadata["structure"])
-        full_structure_list = structure_as_list(full_structure_str)
-        if len(self.chosen_structure) == 0:
-            self.chosen_structure = structure_as_list(full_structure_str)
-            log("chosen structure: {}".format(str(self.chosen_structure)))
-            return
-        if not "-" in self.chosen_structure:
-            self.chosen_structure = structure_as_list(
-                str(self.chosen_structure)
-            )
-            log("chosen structure: {}".format(str(self.chosen_structure)))
-            return
-
-        dash_index = str(self.chosen_structure).find("-")
-        start_verse = str(self.chosen_structure[:dash_index]).strip()
-        end_verse = str(self.chosen_structure[dash_index + 1 :]).strip()
-
-        try:
-            if int(start_verse) >= int(end_verse):
-                error_msg("{} < {} must be true".format(start_verse, end_verse))
-            if start_verse not in full_structure_str:
-                error_msg("structure {} unknown".format(start_verse))
-            if end_verse not in full_structure_str:
-                error_msg("structure {} unknown".format(end_verse))
-        except (ValueError, IndexError):
-            error_msg("please choose a valid integer for the song structure")
-
-        start_index = full_structure_list.index(start_verse)
-        if start_index != 0:
-            if (
-                full_structure_list[0] == "R"
-                and full_structure_list[start_index - 1] == "R"
-            ):
-                start_index -= 1
-        end_index = full_structure_list.index(end_verse)
-        if end_index != len(full_structure_list) - 1:
-            if (
-                full_structure_list[-1] == "R"
-                and full_structure_list[end_index + 1] == "R"
-            ):
-                end_index += 1
-
-        self.chosen_structure = full_structure_list[start_index : end_index + 1]
-        log("chosen structure: {}".format(str(self.chosen_structure)))
+        self.chosen_structure: list | str = parse_input(
+            str(self.metadata["structure"]), self.chosen_structure
+        )
 
     def parse_argv(self) -> None:
         try:

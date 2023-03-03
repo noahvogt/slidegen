@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 IMAGE_FORMAT = "jpeg"
 FILE_EXTENSION = "jpg"
-FILE_NAMEING = "slide"
+FILE_NAMEING = "slide-"
 
 WIDTH = 1920
 HEIGHT = 1080
