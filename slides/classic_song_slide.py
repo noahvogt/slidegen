@@ -52,8 +52,8 @@ class ClassicSongSlide(SongSlide):
             )
         bg_img.composite(
             self.get_structure_info_display(song_structure, index),
-            top=const.STRUCTURE_Y,
-            left=const.STRUCTURE_X,
+            top=const.INFODISPLAY_Y,
+            left=const.INFODISPLAY_X,
         )
         return bg_img.clone()
 

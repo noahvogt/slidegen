@@ -98,15 +98,15 @@ Now for explanation of the individual entries.
 
 #### File Format and Naming
 
-`IMAGE_FORMAT` forces a specific file format when writing the files in formats accepted by ImageMagick. The individual slides get named in this form: `${IMAGE_FORMAT}${SLIDE_NUMBER}${FILE_EXTENSION}`. Hence with the default config of
+`IMAGE_FORMAT` forces a specific file format when writing the files in formats accepted by ImageMagick. The individual slides get named in this form: `${FILE_NAMEING}${SLIDE_NUMBER}${FILE_EXTENSION}`. Hence with the default config of
 
 ```python
 IMAGE_FORMAT = "jpeg"
 FILE_EXTENSION = "jpg"
-FILE_NAMEING = "slide"
+FILE_NAMEING = "slide-"
 ```
 
-the slides would be named `slide1.jpg`, `slide2.jpg`, `slide3.jpg` etc.
+the slides would be named `slide-1.jpg`, `slide-2.jpg`, `slide-3.jpg` etc.
 
 #### Dimensions
 
@@ -139,6 +139,22 @@ TITLE_HEIGHT = 160
 TITLEBAR_Y = 65
 ```
 
+Both `TITLEBAR_Y` and `TITLE_HEIGHT` are transformations given in pixels as shown in the following image. THE `TITLE_COLOR` gives a color of the song title (in this example, *"Amazing Grace"*) in the accepted color format of ImageMagick, same for the font sizes. More in detail, the `MAX_TITLE_FONT_SIZE` is applied when the song title is not too long, but when is the case, slidegen automatically shrinks down the font size in steps of `TITLE_FONT_SIZE_STEP` until it reaches the minimum font size specified by `MIN_TITLE_FONT_SIZE`.
+
+![Titlebar Explanation](media/titlebar.jpg)
+
+#### Infodisplay
+
+```python
+INFODISPLAY_FONT_SIZE = 25
+INFODISPLAY_ITEM_WIDTH = 20
+INFODISPLAY_X = 1650
+INFODISPLAY_Y = 1000
+```
+
+`INFODISPLAY_X` and `INFODISPLAY_Y` are the coordinates given as pixels which define where the top-left pixel of the infodisplay is located on the song slides. `INFODISPLAY_FONT_SIZE` just gives the font size in a format acceptable by ImageMagick. Closely related, `INFODISPLAY_ITEM_WIDTH` gives the width in pixels of both the letter of a structure element in the infodisplay and the whitespace that follows before the next structure to the right.
+
+![Infodisplay Explanation](media/infodisplay.jpg)
 
 ## Roadmap
 
@@ -151,7 +167,6 @@ These are some issues and possible changes that will be addressed or at least co
 - asynchronous slide generation
 - use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would slidegen cause to terminate unsuccessfully
-- better packaging and modularisation
 - add more optional metadata strings
 - use a more typical commandline argument system
 - add more documentation, especially explaining the slide generation and its configuration
