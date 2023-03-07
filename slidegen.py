@@ -31,24 +31,34 @@ from slides import (
     count_number_of_slides_to_be_generated,
 )
 
-from input import parse_prompt_input, parse_metadata, parse_songtext, parse_argv
+from input import (
+    parse_prompt_input,
+    parse_metadata,
+    parse_songtext,
+    parse_argv_as_tuple,
+)
 
 
 class Slidegen:
     def __init__(
-        self, song_template_form, start_slide_form, song_slide_form
+        self,
+        song_template_form,
+        start_slide_form,
+        song_slide_form,
+        song_file_path,
+        output_dir,
+        chosen_structure,
     ) -> None:
         self.metadata: dict = {"": ""}
         self.songtext: dict = {"": ""}
-        self.song_file_path: str = ""
+        self.song_file_path: str = song_file_path
         self.song_file_content: list = []
-        self.output_dir: str = ""
-        self.chosen_structure: list | str = ""
+        self.output_dir: str = output_dir
+        self.chosen_structure = chosen_structure
         self.generated_slides: list = []
         self.song_template_form = song_template_form
         self.start_slide_form = start_slide_form
         self.song_slide_form = song_slide_form
-        parse_argv(self)
 
     def execute(self) -> None:
         self.parse_file()
@@ -76,7 +86,10 @@ def main() -> None:
     colorama.init()
 
     slidegen: Slidegen = Slidegen(
-        ClassicSongTemplate, ClassicStartSlide, ClassicSongSlide
+        ClassicSongTemplate,
+        ClassicStartSlide,
+        ClassicSongSlide,
+        *parse_argv_as_tuple()
     )
     slidegen.execute()
 

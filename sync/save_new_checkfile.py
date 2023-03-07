@@ -15,23 +15,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
+from os import system, path
 
-from utils import log, error_msg
+import shutil
+
+from utils import log
+
+import config as const
 
 
-def parse_argv_as_tuple() -> tuple:
-    try:
-        song_file_path = sys.argv[1]
-        output_dir = sys.argv[2]
-    except IndexError:
-        error_msg("incorrect amount of arguments provided, exiting...")
-    try:
-        chosen_structure = sys.argv[3]
-        if chosen_structure.strip() == "":
-            chosen_structure = ""
-    except IndexError:
-        chosen_structure = ""
-
-    log("parsing {}...".format(song_file_path))
-    return song_file_path, output_dir, chosen_structure
+def save_new_checkfile() -> None:
+    log("saving new checkfile...")
+    system(
+        'rclone md5sum {} > "{}"'.format(
+            const.RCLONE_REMOTE_DIR,
+            path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHECKFILE_NAMING),
+        )
+    )
+    if not path.isfile(
+        path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING)
+    ):
+        shutil.copyfile(
+            path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHECKFILE_NAMING),
+            path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING),
+        )

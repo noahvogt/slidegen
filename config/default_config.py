@@ -75,3 +75,14 @@ ARROW_X = 1725
 ARROW_Y = 900
 
 METADATA_STRINGS = ("title", "book", "text", "melody", "structure")
+
+RCLONE_REMOTE_DIR = ""
+RCLONE_LOCAL_DIR = ""
+
+SSYNC_CACHE_DIR = ""
+SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
+SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
+
+OBS_SLIDES_DIR = ""
+OBS_TARGET_SUBDIR = ""
+OBS_MIN_SUBDIRS = 7

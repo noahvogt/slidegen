@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Copyright © 2022 Noah Vogt <noah@noahvogt.com>
 
@@ -15,23 +17,31 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
+import colorama
 
-from utils import log, error_msg
+from utils import clear_obs_slides_dir
+from input import validate_ssync_config, slide_selection_iterator
+from sync import sync_slide_repo, save_new_checkfile, syncing_needed
 
 
-def parse_argv_as_tuple() -> tuple:
-    try:
-        song_file_path = sys.argv[1]
-        output_dir = sys.argv[2]
-    except IndexError:
-        error_msg("incorrect amount of arguments provided, exiting...")
-    try:
-        chosen_structure = sys.argv[3]
-        if chosen_structure.strip() == "":
-            chosen_structure = ""
-    except IndexError:
-        chosen_structure = ""
+class Ssync:
+    def __init__(self):
+        validate_ssync_config()
 
-    log("parsing {}...".format(song_file_path))
-    return song_file_path, output_dir, chosen_structure
+    def execute(self):
+        if syncing_needed():
+            sync_slide_repo()
+            save_new_checkfile()
+        clear_obs_slides_dir()
+        slide_selection_iterator()
+
+
+def main() -> None:
+    colorama.init()
+
+    ssync: Ssync = Ssync()
+    ssync.execute()
+
+
+if __name__ == "__main__":
+    main()

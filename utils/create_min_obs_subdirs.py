@@ -15,23 +15,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
+import os
 
-from utils import log, error_msg
+import config as const
 
 
-def parse_argv_as_tuple() -> tuple:
-    try:
-        song_file_path = sys.argv[1]
-        output_dir = sys.argv[2]
-    except IndexError:
-        error_msg("incorrect amount of arguments provided, exiting...")
-    try:
-        chosen_structure = sys.argv[3]
-        if chosen_structure.strip() == "":
-            chosen_structure = ""
-    except IndexError:
-        chosen_structure = ""
+def create_min_obs_subdirs(count: int) -> None:
+    if count >= const.OBS_MIN_SUBDIRS:
+        return
 
-    log("parsing {}...".format(song_file_path))
-    return song_file_path, output_dir, chosen_structure
+    for number in range(count, const.OBS_MIN_SUBDIRS + 1):
+        dirname = os.path.join(
+            const.OBS_SLIDES_DIR,
+            const.OBS_TARGET_SUBDIR + " " + str(number),
+        )
+        os.mkdir(dirname)
