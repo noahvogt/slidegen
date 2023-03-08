@@ -63,7 +63,7 @@ class ClassicSongTemplate(SongTemplate):
                     (const.TITLE_HEIGHT - trimmed_img_height) / 2
                 )
                 correction_heigt = (
-                    const.TRIANGLE_HEIGTH
+                    const.TITLEBAR_TRIANGLE_HEIGTH
                     - trimmed_img_height
                     - (2 * concat_height)
                 )
@@ -82,7 +82,9 @@ class ClassicSongTemplate(SongTemplate):
                 )
                 concatenated_img.concat(stacked=True)
                 if concatenated_img.width > (
-                    const.WIDTH - const.PLAYER_WIDTH - const.TRIANGLE_WIDTH
+                    const.WIDTH
+                    - const.PLAYER_WIDTH
+                    - const.TITLEBAR_TRIANGLE_WIDTH
                 ):
                     font_size -= const.TITLE_FONT_SIZE_STEP
                     continue
@@ -103,15 +105,15 @@ class ClassicSongTemplate(SongTemplate):
         with Drawing() as draw:
             draw.fill_color = Color(const.FG_COLOR)
             draw.path_start()
-            draw.path_move(to=(const.TRIANGLE_WIDTH, 0))
+            draw.path_move(to=(const.TITLEBAR_TRIANGLE_WIDTH, 0))
             draw.path_line(to=(0, 0))
-            draw.path_line(to=(0, const.TRIANGLE_HEIGTH))
+            draw.path_line(to=(0, const.TITLEBAR_TRIANGLE_HEIGTH))
             draw.path_close()
             draw.path_finish()
 
             with Image(
-                width=const.TRIANGLE_WIDTH,
-                height=const.TRIANGLE_HEIGTH,
+                width=const.TITLEBAR_TRIANGLE_WIDTH,
+                height=const.TITLEBAR_TRIANGLE_HEIGTH,
                 background=Color(const.BG_COLOR),
             ) as img:
                 draw(img)

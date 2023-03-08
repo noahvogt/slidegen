@@ -68,7 +68,7 @@ def slide_selection_iterator():
             )
             src_dir = os.path.join(const.RCLONE_LOCAL_DIR, chosen_song_file)
             dest_dir = os.path.join(
-                const.SSYNC_CACHE_DIR,
+                const.OBS_SLIDES_DIR,
                 const.OBS_TARGET_SUBDIR + " " + str(index),
             )
             os.mkdir(dest_dir)

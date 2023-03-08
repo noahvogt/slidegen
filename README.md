@@ -1,10 +1,10 @@
 # slidegen
 
-As the name may partially imply, **slidegen** generates song slides as images - out of a plain text input file - intended for use with [OBS]() to livestream a typical (contemporary) Sunday church service.
+As the name may partially imply, **`slidegen.py`** generates song slides as images - out of a plain text input file - intended for use with [OBS]() to livestream a typical (contemporary) Sunday church service.
 
-This program is also intended to be used in conjunction with [ssync](https://github.com/noahvogt/ssync), which is basically a wrapper script that automatically syncs a local copy with the remote slide repository, removes the old obs slides and lets the user interactively choose the new slides with a smart fuzzy finder.
+This program is also intended to be used in conjunction with **`ssync.py`**, which is basically a wrapper script that automatically syncs a local copy with the remote slide repository, removes the old obs slides and lets the user interactively choose the new slides with a smart fuzzy finder. It stands for slidesync, by the way.
 
-Standalone use of **slidegen** is possible and can sure fit other use cases.
+Standalone use of **`slidegen.py`** is possible and can sure fit other use cases.
 
 ## Why this program exists
 
@@ -29,6 +29,10 @@ with `SRC_PATH` being the path to the song plain text file, `DEST_DIR` the outpu
 Here a short example:
 
     ./slidegen.py "../songrepo/Stille Nacht.txt" "~/Documents/Song Slides 1"
+
+The wrapper script doesn't have any additional arguments, as all the relevant variables are to be defined in the configuration file, but more on that below. Thus, execute ssync like this:
+
+    ./ssync.py
 
 ### Source File Layout
 
@@ -85,9 +89,9 @@ Here is a example of a text body using the first three verses of *'Amazing Grace
 
 ### Configuration
 
-The configuration of `slidegen.py` is handled via constants in `*.py` files. The default configuration is stored in `config/default_config.py`, and in the same form a custom user-defined configuration can optionally be placed in `config/config.py`. You don't have to specify all the constants present in the default config, only the one's you want to change.
+The configuration of both `slidegen.py` and `ssync.py` is handled via constants in `*.py` files. The default configuration is stored in `config/default_config.py`, and in the same form a custom user-defined configuration can optionally - except for `ssync.py` which needs user-defined variables -  be placed in `config/config.py`. You don't have to specify all the constants present in the default config, only the one's you want to change.
 
-For example, if you want to change the text color to green and the file extension the jpeg, your `config/config.py` could look like this:
+For example, if you want to change the text color to green and the file extension to "jpeg", your `config/config.py` could look like this:
 
 ```python
 TEXT_COLOR = "green"
@@ -137,9 +141,11 @@ MIN_TITLE_FONT_SIZE = 20
 TITLE_FONT_SIZE_STEP = 10
 TITLE_HEIGHT = 160
 TITLEBAR_Y = 65
+TITLEBAR_TRIANGLE_WIDTH = 80
+TITLEBAR_TRIANGLE_HEIGTH = 160
 ```
 
-Both `TITLEBAR_Y` and `TITLE_HEIGHT` are transformations given in pixels as shown in the following image. THE `TITLE_COLOR` gives a color of the song title (in this example, *"Amazing Grace"*) in the accepted color format of ImageMagick, same for the font sizes. More in detail, the `MAX_TITLE_FONT_SIZE` is applied when the song title is not too long, but when is the case, slidegen automatically shrinks down the font size in steps of `TITLE_FONT_SIZE_STEP` until it reaches the minimum font size specified by `MIN_TITLE_FONT_SIZE`.
+Both `TITLEBAR_Y` and `TITLE_HEIGHT` are transformations given in pixels as shown in the following image. THE `TITLE_COLOR` gives a color of the song title (in this example, *"Amazing Grace"*) in the accepted color format of ImageMagick, same for the font sizes. More in detail, the `MAX_TITLE_FONT_SIZE` is applied when the song title is not too long, but when is the case, slidegen automatically shrinks down the font size in steps of `TITLE_FONT_SIZE_STEP` until it reaches the minimum font size specified by `MIN_TITLE_FONT_SIZE`. The dimensions of the triangle on the right of the titlebar can be give in pixel as the height by `TITLEBAR_TRIANGLE_HEIGTH` and as the width by `TITLEBAR_TRIANGLE_WIDTH`.
 
 ![Titlebar Explanation](media/titlebar.jpg)
 
@@ -156,6 +162,77 @@ INFODISPLAY_Y = 1000
 
 ![Infodisplay Explanation](media/infodisplay.jpg)
 
+#### Player
+
+```python
+PLAYER_WIDTH = 560
+PLAYER_HEIGHT = 315
+```
+
+The player is intended to be another OBS video source that displays someone or multiple people playing their instruments while the song is playing. The player is anchored on the top right of the slides. In pixels, you can change the dimensions of the player by width via `PLAYER_WIDTH` and by height via `PLAYER_HEIGHT`.
+
+This is so that when the text width on maximum font size collides with the player, the font size is gradually decreased - once again only down to the defined minimum font size - until there is no overlap anymore. Hence if you don't intend to use a player just set the dimensions to 0.
+
+![Player Explanation](media/player.jpg)
+
+#### Font Configuration
+
+Slidegen uses two font styles, *normal* and *bold*. `BOLD_FONT_PATH` should point the respecting ttf/otf file for the bold style font and `FONT_PATH` for the normal style font. `FONT` and `BOLD_FONT` should be defined as the name of the font as accepted by ImageMagick. This is as some submodules for ImageMagick - or at least their wand python bindings - cannot reliably convert between name and path of the font and has sometimes problems accessing the system font config. Hence we use these four variables. The default config
+
+```python
+BOLD_FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
+FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
+FONT = "Century-Gothic"
+BOLD_FONT = "Century-Gothic-Bold"
+```
+
+is made to use the [ttf-century-gothic](https://aur.archlinux.org/packages/ttf-century-gothic) font on the AUR on Arch Linux (-based distros). For different operating systems you may need to use another naming convention for `FONT` and `FONT_BOLD` like using spaces instead of dashes, but check out the ImageMagick documentation for more details.
+
+#### Metadata
+
+```python
+METADATA_FONT_SIZE = 36
+METADATA_X = 70
+METADATA_VALUE_CHAR_LIMIT = 100
+BOOK_Y = 260
+ATTRIBUTIONS_Y = 930
+```
+
+You can change the font size off the three metadata lines with an acceptable format by ImageMagick using `METADATA_FONT_SIZE`. The metadata is separated into two block on the start slide: The top part contains the book info and the bottom part contains the attributions. You can set the top part placement in pixels with `BOOK_Y` and the respecting bottom part with `ATTRIBUTIONS_Y`. You can also set the maximum character limit of these metadata lines with `METADATA_VALUE_CHAR_LIMIT`.
+
+![](media/metadata.jpg)
+
+#### Text Canvas
+
+```python
+STRUCTURE_ELEMENT_X = 80
+STRUCTURE_ELEMENT_Y = 400
+```
+
+On the top left of the Text Canvas, there is a indicator for the structure element of the current slide. The structure element is followed by a dot. Note that the chorus or R is not displayed. You can control the placement in pixels with its X coordinate with `STRUCTURE_ELEMENT_X` and its Y coordinate with `STRUCTURE_ELEMENT_Y`.
+
+```python
+TEXT_CANVAS_X = 160
+TEXT_CANVAS_Y = 400
+TEXT_CANVAS_WIDTH = 1600
+TEXT_CANVAS_HEIGHT = 600
+```
+
+The Text canvas placement is defined in pixels with its coordinates via `TEXT_CANVAS_X` and `TEXT_CANVAS_Y`. Also in pixels are the dimensions in width with `TEXT_CANVAS_WIDTH` and height with `TEXT_CANVAS_HEIGHT`.
+
+```python
+STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT = 85
+STRUCTURE_ELEMENT_MAX_LINES = 8
+MAX_CANVAS_FONT_SIZE = 55
+MIN_CANVAS_FONT_SIZE = 35
+CANVAS_FONT_SIZE_STEP = 5
+INTERLINE_SPACING = 30
+```
+
+The character limit of each line is defined with `STRUCTURE_ELEMENT_PER_LINE_CHAR_LIMIT`. The maximum number of lines is set by `STRUCTURE_ELEMENT_MAX_LINES`. Now all the following variables in this paragraph are defined in a format accepted by ImageMagick. `MAX_CANVAS_FONT_SIZE` sets the maximum font size in the text canvas, that gets reduced by a delta of `CANVAS_FONT_SIZE_STEP` until the minimum of `MIN_CANVAS_FONT_SIZE` is reached. The interline spacing is indicated by `INTERLINE_SPACING`.
+
+![](media/text-canvas.jpg)
+
 ## Roadmap
 
 These are some issues and possible changes that will be addressed or at least considered by our future development efforts:
@@ -163,13 +240,12 @@ These are some issues and possible changes that will be addressed or at least co
 - prevent all crashes:
     - safe `PROMPT_INPUT` parsing
     - handle possibly incorrect or insensible configurations safely
-- integrating [ssync](https://github.com/noahvogt/ssync) into this (and hence a single) repo
 - asynchronous slide generation
 - use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would slidegen cause to terminate unsuccessfully
 - add more optional metadata strings
 - use a more typical commandline argument system
-- add more documentation, especially explaining the slide generation and its configuration
+- add more documentation, especially explaining the slide generation and its configuration, but also dependencies and deployment
 - better handling of font path Configuration
 - add tests
 
