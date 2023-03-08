@@ -20,12 +20,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import colorama
 
 from utils import clear_obs_slides_dir
-from input import validate_ssync_config, slide_selection_iterator
+from input import (
+    validate_ssync_config,
+    slide_selection_iterator,
+    parse_ssync_args,
+)
 from sync import sync_slide_repo, save_new_checkfile, syncing_needed
 
 
 class Ssync:
     def __init__(self):
+        parse_ssync_args()
         validate_ssync_config()
 
     def execute(self):

@@ -34,6 +34,11 @@ The wrapper script doesn't have any additional arguments, as all the relevant va
 
     ./ssync.py
 
+Also for both programs there is a help page with `-h` or `--help`.
+
+    ./ssync.py -h
+    ./slidegen.py --help
+
 ### Source File Layout
 
 The file is divided into two what we will here call *parts* that are divided with at least one `\n` character and an arbitrary amount of lines that are either empty or only contain whitespace:
@@ -103,6 +108,8 @@ Note that directories constants support environment variables in the form `$var`
 ```python
 OBS_SLIDES_DIR = "~/Documents/obs-${OBS_MAJOR_VERSION}/slides$month$weekday"
 ```
+
+Also note that if you enter unsensible configuration entries, that the program may crash as there is basically no config validation except for something like directories.
 
 Now for explanation of the individual entries.
 
@@ -301,8 +308,7 @@ These are some issues and possible changes that will be addressed or at least co
     - handle possibly incorrect or insensible configurations safely
 - asynchronous slide generation
 - use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
-- provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would slidegen cause to terminate unsuccessfully
-- use a more typical commandline argument system
+- provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would cause slidegen to terminate unsuccessfully
 - add more documentation, especially explaining the slide generation, but also dependencies and deployment
 - add tests
 

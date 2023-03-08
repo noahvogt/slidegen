@@ -15,19 +15,42 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
+import argparse
 
 from utils import log, error_msg, expand_dir
 
 
 def parse_argv_as_tuple() -> tuple:
+    parser = argparse.ArgumentParser(
+        prog="slidegen", description="slidegen - a slide generator."
+    )
+    parser.add_argument(
+        "songfile",
+        type=str,
+        help="the input text file (with header and body)",
+    )
+    parser.add_argument(
+        "output",
+        type=str,
+        help="output directory where the generated slides are placed",
+    )
+    parser.add_argument(
+        "structure",
+        type=str,
+        help="the chosen song structure",
+        nargs="?",
+        default="",
+    )
+
+    args = parser.parse_args()
+
     try:
-        song_file_path = sys.argv[1]
-        output_dir = expand_dir(sys.argv[2])
+        song_file_path = expand_dir(args.songfile)
+        output_dir = expand_dir(args.output)
     except IndexError:
         error_msg("incorrect amount of arguments provided, exiting...")
     try:
-        chosen_structure = sys.argv[3]
+        chosen_structure = args.structure
         if chosen_structure.strip() == "":
             chosen_structure = ""
     except IndexError:
@@ -35,3 +58,11 @@ def parse_argv_as_tuple() -> tuple:
 
     log("parsing {}...".format(song_file_path))
     return song_file_path, output_dir, chosen_structure
+
+def parse_ssync_args() -> None:
+    parser = argparse.ArgumentParser(
+        prog="ssync",
+        description="ssync - an interactive program syncing that lets "
+        + "you choose songs to generate slides for using fzf.",
+    )
+    parser.parse_args()

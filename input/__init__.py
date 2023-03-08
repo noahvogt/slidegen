@@ -18,5 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .parse_prompt import parse_prompt_input
 from .parse_file import parse_metadata, parse_songtext
 from .parse_argv import parse_argv_as_tuple
+from .parse_argv import parse_ssync_args
 from .validate_ssync_config import validate_ssync_config
 from .slide_selection_iterator import slide_selection_iterator
