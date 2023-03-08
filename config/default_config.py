@@ -84,5 +84,5 @@ SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
 SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
 
 OBS_SLIDES_DIR = ""
-OBS_TARGET_SUBDIR = ""
+OBS_SUBDIR_NAMING = ""
 OBS_MIN_SUBDIRS = 7

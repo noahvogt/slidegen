@@ -1,6 +1,6 @@
 # slidegen
 
-As the name may partially imply, **`slidegen.py`** generates song slides as images - out of a plain text input file - intended for use with [OBS]() to livestream a typical (contemporary) Sunday church service.
+As the name may partially imply, **`slidegen.py`** generates song slides as images - out of a plain text input file - intended for use with [OBS](https://obsproject.com/) to livestream a typical (contemporary) Sunday church service.
 
 This program is also intended to be used in conjunction with **`ssync.py`**, which is basically a wrapper script that automatically syncs a local copy with the remote slide repository, removes the old obs slides and lets the user interactively choose the new slides with a smart fuzzy finder. It stands for slidesync, by the way.
 
@@ -96,6 +96,12 @@ For example, if you want to change the text color to green and the file extensio
 ```python
 TEXT_COLOR = "green"
 FILE_EXTENSION = "jpeg"
+```
+
+Note that directories constants support environment variables in the form `$var` and `${var}` and the `~` user expansion. Also you can always use relative paths, so you don't really need to always enter the full absolute path. For example you could do something like this:
+
+```python
+OBS_SLIDES_DIR = "~/Documents/obs-${OBS_MAJOR_VERSION}/slides$month$weekday"
 ```
 
 Now for explanation of the individual entries.
@@ -263,13 +269,13 @@ RCLONE_REMOTE_DIR = 'mydr:"02 Liedtexte"'
 RCLONE_LOCAL_DIR = "/home/billy/Documents/songrepo"
 ```
 
-Here an example of how to setup the rclone variables. `RCLONE_REMOTE_DIR` sets the rclone remote directory in the typical rclone format and `RCLONE_LOCAL_DIR` is the local directory on your machine that rclone syncs to. For more information, please check the rclone documentation.
+Here an example of how to setup the rclone variables. `RCLONE_REMOTE_DIR` sets the rclone remote directory in the typical rclone format and `RCLONE_LOCAL_DIR` is the local directory on your machine that rclone syncs to. For more information, please check the [rclone documentation](https://rclone.org/docs/).
 
 
 #### SSync Cache
 
 ```python
-SSYNC_CACHE_DIR = "/home/billy/.cache/ssync"
+SSYNC_CACHE_DIR = "$XDG_CACHE_HOME/ssync"
 SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
 SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
 ```
@@ -280,11 +286,11 @@ SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
 
 ```python
 OBS_MIN_SUBDIRS = 7
-OBS_SLIDES_DIR = "/home/billy/Documents/obs/slides"
-OBS_TARGET_SUBDIR = "Lied"
+OBS_SLIDES_DIR = "~/Documents/obs/slides"
+OBS_SUBDIR_NAMING = "Song "
 ```
 
-The slides are placed in subdirectories of `OBS_SLIDES_DIR` with the following naming: `${OBS_TARGET_SUBDIR} ${NUM}` with `NUM` being the number - also an integer - of the song selected by ssync, starting by 1. So that OBS doesn't complain about missing directories, empty directories are created following the naming for subdirectories up until the number defined by `OBS_MIN_SUBDIRS`.
+The slides are placed in subdirectories of `OBS_SLIDES_DIR` with the following naming: `${OBS_SUBDIR_NAMING}${NUM}` with `NUM` being the number - also an integer - of the song selected by ssync, starting by 1. So that OBS doesn't complain about missing directories, empty directories are created following the naming for subdirectories up until the number defined by `OBS_MIN_SUBDIRS`.
 
 ## Roadmap
 
@@ -293,15 +299,11 @@ These are some issues and possible changes that will be addressed or at least co
 - prevent all crashes:
     - safe `PROMPT_INPUT` parsing
     - handle possibly incorrect or insensible configurations safely
-    - ssync path safety
-- add support for environment variables and ~ symbol in (ssync) paths
-- clearer ssync obs subdirectory naming
 - asynchronous slide generation
 - use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would slidegen cause to terminate unsuccessfully
 - use a more typical commandline argument system
 - add more documentation, especially explaining the slide generation, but also dependencies and deployment
-- better handling of font path Configuration
 - add tests
 
 ## Licensing

@@ -19,23 +19,25 @@ from os import system, path
 
 import shutil
 
-from utils import log
+from utils import log, expand_dir, error_msg
 
 import config as const
 
 
 def save_new_checkfile() -> None:
+    cache_dir = expand_dir(const.SSYNC_CACHE_DIR)
     log("saving new checkfile...")
     system(
         'rclone md5sum {} > "{}"'.format(
             const.RCLONE_REMOTE_DIR,
-            path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHECKFILE_NAMING),
+            path.join(cache_dir, const.SSYNC_CHECKFILE_NAMING),
         )
     )
-    if not path.isfile(
-        path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING)
-    ):
-        shutil.copyfile(
-            path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHECKFILE_NAMING),
-            path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING),
-        )
+    try:
+        if not path.isfile(path.join(cache_dir, const.SSYNC_CACHEFILE_NAMING)):
+            shutil.copyfile(
+                path.join(cache_dir, const.SSYNC_CHECKFILE_NAMING),
+                path.join(cache_dir, const.SSYNC_CACHEFILE_NAMING),
+            )
+    except (FileNotFoundError, PermissionError, IOError) as error:
+        error_msg("Failed to save new checkfile. Reason: {}".format(error))

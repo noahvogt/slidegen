@@ -15,23 +15,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
-
-from utils import log, error_msg, expand_dir
+import os
 
 
-def parse_argv_as_tuple() -> tuple:
-    try:
-        song_file_path = sys.argv[1]
-        output_dir = expand_dir(sys.argv[2])
-    except IndexError:
-        error_msg("incorrect amount of arguments provided, exiting...")
-    try:
-        chosen_structure = sys.argv[3]
-        if chosen_structure.strip() == "":
-            chosen_structure = ""
-    except IndexError:
-        chosen_structure = ""
-
-    log("parsing {}...".format(song_file_path))
-    return song_file_path, output_dir, chosen_structure
+def expand_dir(directory: str) -> str:
+    expanded_user_dir = os.path.expanduser(directory)
+    expanded_user_and_env_vars_dir = os.path.expandvars(expanded_user_dir)
+    abs_path = os.path.abspath(expanded_user_and_env_vars_dir)
+    return abs_path

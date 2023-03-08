@@ -19,14 +19,39 @@ import os
 
 import config as const
 
+from .log import error_msg, log
+from .path import expand_dir
 
-def create_min_obs_subdirs(count: int) -> None:
-    if count >= const.OBS_MIN_SUBDIRS:
-        return
 
-    for number in range(count, const.OBS_MIN_SUBDIRS + 1):
-        dirname = os.path.join(
-            const.OBS_SLIDES_DIR,
-            const.OBS_TARGET_SUBDIR + " " + str(number),
+def create_min_obs_subdirs() -> None:
+    obs_slides_dir = expand_dir(const.OBS_SLIDES_DIR)
+
+    subdirs_to_create = []
+    for num in range(1, const.OBS_MIN_SUBDIRS + 1):
+        subdirs_to_create.append(num)
+    for file in os.listdir(obs_slides_dir):
+        if file.startswith(str(const.OBS_SUBDIR_NAMING)):
+            try:
+                index = int(file[len(str(const.OBS_SUBDIR_NAMING)) :])
+            except ValueError:
+                error_msg(
+                    "could not parse file '{}' in '{}'".format(
+                        file, obs_slides_dir
+                    )
+                )
+            if index in subdirs_to_create:
+                subdirs_to_create.remove(index)
+
+    dirname = ""
+    try:
+        for number in subdirs_to_create:
+            dirname = os.path.join(
+                obs_slides_dir,
+                const.OBS_SUBDIR_NAMING + str(number),
+            )
+            os.mkdir(dirname)
+            log("creating empty slide directory '{}'...".format(dirname))
+    except (FileNotFoundError, PermissionError, IOError) as error:
+        error_msg(
+            "Failed to create directory '{}'. Reason: {}".format(dirname, error)
         )
-        os.mkdir(dirname)

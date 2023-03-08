@@ -25,3 +25,4 @@ from .strings import (
 from .img import get_empty_image
 from .create_min_obs_subdirs import create_min_obs_subdirs
 from .clear_obs_slides_dir import clear_obs_slides_dir
+from .path import expand_dir
