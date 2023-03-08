@@ -233,6 +233,59 @@ The character limit of each line is defined with `STRUCTURE_ELEMENT_PER_LINE_CHA
 
 ![](media/text-canvas.jpg)
 
+#### Arrow
+
+```python
+ARROW_HEIGHT = 50
+ARROW_COLOR = "black"
+ARROW_X = 1725
+ARROW_Y = 900
+```
+
+Here we are talking about the arrow that appears when the text is too long for a single slide, so the text gets split into mutliple slides. And so that this is obvious to the viewer of the slide an arrow is placed - by default in the bottom right of the song slide - to show that this is in fact part of a multi page slide, but not the last page. That is only on the last page of a multi page slide the arrow disappears.
+
+The color of the arrow is to be defined in a format accepted by ImageMagick in `ARROW_COLOR`. The rest of the variables in this paragraph will be in pixels. The dimensions of the pixels are calculated by a given height from `ARROW_HEIGHT`, as not to distort the shape of the arrow. The placement coordinates are defined by `ARROW_X` and `ARROW_Y`.
+
+![](media/arrow.jpg)
+
+#### Metadata Strings
+
+```python
+METADATA_STRINGS = ("title", "book", "text", "melody", "structure")
+```
+
+They are defined in a tuple of five string, and are not really meant to be changed by the user. Only change if you are an advanced user who read and understand the source code.
+
+#### Rclone
+
+```python
+RCLONE_REMOTE_DIR = 'mydr:"02 Liedtexte"'
+RCLONE_LOCAL_DIR = "/home/billy/Documents/songrepo"
+```
+
+Here an example of how to setup the rclone variables. `RCLONE_REMOTE_DIR` sets the rclone remote directory in the typical rclone format and `RCLONE_LOCAL_DIR` is the local directory on your machine that rclone syncs to. For more information, please check the rclone documentation.
+
+
+#### SSync Cache
+
+```python
+SSYNC_CACHE_DIR = "/home/billy/.cache/ssync"
+SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
+SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
+```
+
+`SSYNC_CACHE_DIR` sets the directory in which the checkfile and cachefile of `ssync.py` get placed. You can change their name by setting `SSYNC_CACHEFILE_NAMING` for the cachefile and `SSYNC_CHECKFILE_NAMING` for the checkfile.
+
+#### OBS Slide Settings
+
+```python
+OBS_MIN_SUBDIRS = 7
+OBS_SLIDES_DIR = "/home/billy/Documents/obs/slides"
+OBS_TARGET_SUBDIR = "Lied"
+```
+
+The slides are placed in subdirectories of `OBS_SLIDES_DIR` with the following naming: `${OBS_TARGET_SUBDIR} ${NUM}` with `NUM` being the number - also an integer - of the song selected by ssync, starting by 1. So that OBS doesn't complain about missing directories, empty directories are created following the naming for subdirectories up until the number defined by `OBS_MIN_SUBDIRS`.
+
 ## Roadmap
 
 These are some issues and possible changes that will be addressed or at least considered by our future development efforts:
@@ -240,12 +293,14 @@ These are some issues and possible changes that will be addressed or at least co
 - prevent all crashes:
     - safe `PROMPT_INPUT` parsing
     - handle possibly incorrect or insensible configurations safely
+    - ssync path safety
+- add support for environment variables and ~ symbol in (ssync) paths
+- clearer ssync obs subdirectory naming
 - asynchronous slide generation
 - use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would slidegen cause to terminate unsuccessfully
-- add more optional metadata strings
 - use a more typical commandline argument system
-- add more documentation, especially explaining the slide generation and its configuration, but also dependencies and deployment
+- add more documentation, especially explaining the slide generation, but also dependencies and deployment
 - better handling of font path Configuration
 - add tests
 
