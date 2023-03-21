@@ -311,6 +311,7 @@ These are some issues and possible changes that will be addressed or at least co
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would cause slidegen to terminate unsuccessfully
 - add more documentation, especially explaining the slide generation, but also dependencies and deployment
 - add tests
+- use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
 
 ## Licensing
 
