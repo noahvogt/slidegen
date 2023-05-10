@@ -28,7 +28,7 @@ def validate_ssync_config():
         "SSYNC_CACHEFILE_NAMING": const.SSYNC_CACHEFILE_NAMING,
         "SSYNC_CACHE_DIR": const.SSYNC_CACHE_DIR,
         "OBS_SLIDES_DIR": const.OBS_SLIDES_DIR,
-        "OBS_TARGET_SUBDIR": const.OBS_SUBDIR_NAMING,
+        "OBS_SUBDIR_NAMING": const.OBS_SUBDIR_NAMING,
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
     }
     for key in needed_constants:
