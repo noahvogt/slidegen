@@ -25,5 +25,5 @@ def error_msg(msg: str):
     sys.exit(1)
 
 
-def log(message: str) -> None:
-    print(colored("[*] {}".format(message), "green"))
+def log(message: str, color: str = "green") -> None:
+    print(colored("[*] {}".format(message), color))

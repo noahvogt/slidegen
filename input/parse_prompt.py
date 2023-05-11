@@ -25,10 +25,16 @@ from utils import (
 def parse_prompt_input(slidegen) -> list:
     full_structure_list = structure_as_list(slidegen.metadata["structure"])
     if len(slidegen.chosen_structure) == 0:
-        log("chosen structure: {}".format(str(slidegen.chosen_structure)))
+        log(
+            "chosen structure: {}".format(str(slidegen.metadata["structure"])),
+            color="cyan",
+        )
         return structure_as_list(slidegen.metadata["structure"])
     if not "-" in slidegen.chosen_structure:
-        log("chosen structure: {}".format(str(slidegen.chosen_structure)))
+        log(
+            "chosen structure: {}".format(str(slidegen.chosen_structure)),
+            color="cyan",
+        )
         return structure_as_list(str(slidegen.chosen_structure))
 
     dash_index = str(slidegen.chosen_structure).find("-")

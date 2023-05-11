@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from threading import Thread
 from os import path
 
 from wand.exceptions import BlobError
@@ -37,6 +38,8 @@ def generate_song_slides(
     # unique_structures: list = list(set(chosen_structure))
 
     current_slide_index: int = 0
+
+    threads = []
 
     for index, structure in enumerate(slidegen.chosen_structure):
         structure_element_splitted: list = slidegen.songtext[
@@ -70,9 +73,10 @@ def generate_song_slides(
             current_slide_index += 1
 
             log(
-                "generating song slide [{} / {}]...".format(
+                "spawning subprocess for song slide [{} / {}]...".format(
                     current_slide_index, slide_count
-                )
+                ),
+                color="yellow",
             )
 
             if inner_slide_count == 1:
@@ -90,27 +94,66 @@ def generate_song_slides(
 
                 structure_element_value = structure_element_value[:-1]
 
-            song_slide = slidegen.song_slide_form()
-            song_slide_img = song_slide.get_slide(
-                template_img,
-                structure_element_value,
-                slidegen.chosen_structure,
-                index,
-                bool(
-                    inner_slide_count != 1
-                    and inner_slide != inner_slide_count - 1
-                ),
-            )
-            song_slide_img.format = const.IMAGE_FORMAT
-            try:
-                song_slide_img.save(
-                    filename=path.join(
-                        slidegen.output_dir,
-                        const.FILE_NAMEING
-                        + str(current_slide_index + 1).zfill(zfill_length)
-                        + "."
-                        + const.FILE_EXTENSION,
-                    )
+            threads.append(
+                Thread(
+                    target=generate_song_slide,
+                    args=(
+                        slidegen.song_slide_form,
+                        template_img,
+                        structure_element_value,
+                        slidegen,
+                        index,
+                        inner_slide_count,
+                        inner_slide,
+                        current_slide_index,
+                        zfill_length,
+                    ),
                 )
-            except BlobError:
-                error_msg("could not write slide to target directory")
+            )
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+
+def generate_song_slide(
+    song_slide,
+    template_img,
+    structure_element_value,
+    slidegen,
+    index,
+    inner_slide_count,
+    inner_slide,
+    current_slide_index,
+    zfill_length,
+):
+    song_slide_img = song_slide.get_slide(
+        self=slidegen.song_slide_form(),
+        template_img=template_img,
+        slide_text=structure_element_value,
+        song_structure=slidegen.chosen_structure,
+        index=index,
+        use_arrow=bool(
+            inner_slide_count != 1 and inner_slide != inner_slide_count - 1
+        ),
+    )
+    song_slide_img.format = const.IMAGE_FORMAT
+    try:
+        song_slide_img.save(
+            filename=path.join(
+                slidegen.output_dir,
+                const.FILE_NAMEING
+                + str(current_slide_index + 1).zfill(zfill_length)
+                + "."
+                + const.FILE_EXTENSION,
+            )
+        )
+        log("song slide {} generated and saved".format(current_slide_index))
+    except BlobError:
+        error_msg(
+            "could not write song slide {} to target directory".format(
+                current_slide_index
+            )
+        )

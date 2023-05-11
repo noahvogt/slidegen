@@ -305,8 +305,7 @@ These are some issues and possible changes that will be addressed or at least co
 
 - prevent all crashes:
     - safe `PROMPT_INPUT` parsing
-    - handle possibly incorrect or insensible configurations safely
-- asynchronous slide generation
+- asynchronous slide generation for start slide
 - use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would cause slidegen to terminate unsuccessfully
 - add more documentation, especially explaining the slide generation, but also dependencies and deployment
