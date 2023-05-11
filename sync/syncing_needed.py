@@ -23,7 +23,11 @@ from utils import log
 import config as const
 
 
-def syncing_needed() -> bool:
+def syncing_needed(slidegen) -> bool:
+    if slidegen.offline_flag_enabled:
+        log("skipping sync with remote", color="cyan")
+        return False
+
     if not cachefiles_found():
         return True
 

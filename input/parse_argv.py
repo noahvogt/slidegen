@@ -59,10 +59,21 @@ def parse_argv_as_tuple() -> tuple:
     log("parsing {}...".format(song_file_path))
     return song_file_path, output_dir, chosen_structure
 
-def parse_ssync_args() -> None:
+
+def parse_ssync_args_as_tuple() -> tuple:
     parser = argparse.ArgumentParser(
         prog="ssync",
         description="ssync - an interactive program syncing that lets "
         + "you choose songs to generate slides for using fzf.",
     )
-    parser.parse_args()
+    parser.add_argument(
+        "-o", "--offline", help="skips syncing with remote", action="store_true"
+    )
+    parser.add_argument(
+        "-s",
+        "--sequential",
+        help="disables async slide generation",
+        action="store_true",
+    )
+    args = parser.parse_args()
+    return args.offline, args.sequential

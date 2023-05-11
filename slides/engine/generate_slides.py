@@ -28,18 +28,22 @@ from utils import (
 import config as const
 
 
-def generate_song_slides(
-    slidegen,
-    slide_count,
-    template_img,
-    zfill_length,
+def generate_slides(
+    slidegen, slide_count, template_img, zfill_length, disable_async: bool
 ) -> None:
     log("generating song slides...")
     # unique_structures: list = list(set(chosen_structure))
 
     current_slide_index: int = 0
 
-    threads = []
+    log("spawning subprocess for start slide...", color="yellow")
+
+    threads = [
+        Thread(
+            target=generate_start_slide,
+            args=(slidegen, template_img, zfill_length, disable_async),
+        )
+    ]
 
     for index, structure in enumerate(slidegen.chosen_structure):
         structure_element_splitted: list = slidegen.songtext[
@@ -107,6 +111,7 @@ def generate_song_slides(
                         inner_slide,
                         current_slide_index,
                         zfill_length,
+                        disable_async,
                     ),
                 )
             )
@@ -114,8 +119,34 @@ def generate_song_slides(
     for thread in threads:
         thread.start()
 
-    for thread in threads:
-        thread.join()
+    if disable_async:
+        for thread in threads:
+            thread.join()
+
+
+def generate_start_slide(slidegen, template_img, zfill_length, disable_async):
+    first_slide = slidegen.start_slide_form()
+    start_slide_img = first_slide.get_slide(
+        template_img,
+        slidegen.metadata["book"],
+        slidegen.metadata["text"],
+        slidegen.metadata["melody"],
+    )
+    start_slide_img.format = const.IMAGE_FORMAT
+    try:
+        start_slide_img.save(
+            filename=path.join(
+                slidegen.output_dir,
+                const.FILE_NAMEING
+                + "1".zfill(zfill_length)
+                + "."
+                + const.FILE_EXTENSION,
+            )
+        )
+        if disable_async:
+            log("start slide generated and saved")
+    except BlobError:
+        error_msg("could not write start slide to target directory")
 
 
 def generate_song_slide(
@@ -128,6 +159,7 @@ def generate_song_slide(
     inner_slide,
     current_slide_index,
     zfill_length,
+    disable_async,
 ):
     song_slide_img = song_slide.get_slide(
         self=slidegen.song_slide_form(),
@@ -150,7 +182,8 @@ def generate_song_slide(
                 + const.FILE_EXTENSION,
             )
         )
-        log("song slide {} generated and saved".format(current_slide_index))
+        if disable_async:
+            log("song slide {} generated and saved".format(current_slide_index))
     except BlobError:
         error_msg(
             "could not write song slide {} to target directory".format(

@@ -25,8 +25,7 @@ from slides import (
     ClassicSongTemplate,
     ClassicStartSlide,
     ClassicSongSlide,
-    generate_start_slide,
-    generate_song_slides,
+    generate_slides,
     generate_song_template,
     count_number_of_slides_to_be_generated,
 )
@@ -60,10 +59,10 @@ class Slidegen:
         self.start_slide_form = start_slide_form
         self.song_slide_form = song_slide_form
 
-    def execute(self) -> None:
+    def execute(self, disable_async=False) -> None:
         self.parse_file()
         self.calculate_desired_structures()
-        self.generate_slides()
+        self.generate_slides(disable_async)
 
     def parse_file(self):
         parse_metadata(self)
@@ -72,14 +71,15 @@ class Slidegen:
     def calculate_desired_structures(self) -> None:
         self.chosen_structure = parse_prompt_input(self)
 
-    def generate_slides(self) -> None:
+    def generate_slides(self, disable_async: bool) -> None:
         template_img: Image = generate_song_template(self)
 
         slide_count: int = count_number_of_slides_to_be_generated(self)
         zfill_length: int = len(str(slide_count))
 
-        generate_start_slide(self, template_img, zfill_length)
-        generate_song_slides(self, slide_count, template_img, zfill_length)
+        generate_slides(
+            self, slide_count, template_img, zfill_length, disable_async
+        )
 
 
 def main() -> None:

@@ -25,7 +25,7 @@ import config as const
 import slidegen
 
 
-def slide_selection_iterator():
+def slide_selection_iterator(ssync):
     iterator_prompt = "Exit now? [y/N]: "
     structure_prompt = (
         "Choose song structure (leave blank for full song)"
@@ -90,7 +90,7 @@ def slide_selection_iterator():
                 dest_dir,
                 structure_prompt_answer,
             )
-            slidegen_instance.execute()
+            slidegen_instance.execute(ssync.disable_async)
 
     if os.path.isfile(tempfile_str):
         os.remove(tempfile_str)

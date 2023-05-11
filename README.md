@@ -50,11 +50,11 @@ Here a short example:
 
     ./slidegen.py "../songrepo/Stille Nacht.txt" "~/Documents/Song Slides 1"
 
-The wrapper script doesn't have any additional arguments, as all the relevant variables are to be defined in the configuration file, but more on that below. Thus, execute ssync like this:
+The wrapper script does have two optional arguments, which are usually not needed. One is disables the syncing with the remote and to other disables the asynchronous slide generation, ut check out the help page as shown down below. To execute normally, use
 
     ./ssync.py
 
-Also for both programs there is a help page with `-h` or `--help`.
+and to show the help page for both programs use `-h` or `--help` interchangeably like this:
 
     ./ssync.py -h
     ./slidegen.py --help
@@ -325,7 +325,6 @@ These are some issues and possible changes that will be addressed or at least co
 
 - prevent all crashes:
     - safe `PROMPT_INPUT` parsing
-- asynchronous slide generation for start slide
 - use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
 - provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would cause slidegen to terminate unsuccessfully
 - add more documentation, especially explaining the slide generation, but also dependencies and deployment

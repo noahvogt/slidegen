@@ -23,28 +23,29 @@ from utils import clear_obs_slides_dir
 from input import (
     validate_ssync_config,
     slide_selection_iterator,
-    parse_ssync_args,
+    parse_ssync_args_as_tuple,
 )
 from sync import sync_slide_repo, save_new_checkfile, syncing_needed
 
 
 class Ssync:
-    def __init__(self):
-        parse_ssync_args()
+    def __init__(self, offline, sequential):
         validate_ssync_config()
+        self.offline_flag_enabled = offline
+        self.disable_async = sequential
 
     def execute(self):
-        if syncing_needed():
+        if syncing_needed(self):
             sync_slide_repo()
             save_new_checkfile()
         clear_obs_slides_dir()
-        slide_selection_iterator()
+        slide_selection_iterator(self)
 
 
 def main() -> None:
     colorama.init()
 
-    ssync: Ssync = Ssync()
+    ssync: Ssync = Ssync(*parse_ssync_args_as_tuple())
     ssync.execute()
 
 
