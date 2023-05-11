@@ -15,56 +15,92 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from re import match
+
 from utils import (
     log,
-    error_msg,
     structure_as_list,
+    get_unique_structure_elements,
 )
 
 
 def parse_prompt_input(slidegen) -> list:
     full_structure_list = structure_as_list(slidegen.metadata["structure"])
-    if len(slidegen.chosen_structure) == 0:
+    calculated_prompt = generate_final_prompt(
+        str(slidegen.chosen_structure), slidegen.metadata["structure"]
+    )
+    log(
+        "chosen structure: {}".format(calculated_prompt),
+        color="cyan",
+    )
+    return structure_as_list(calculated_prompt)
+
+
+def generate_final_prompt(structure_prompt_answer, full_song_structure) -> str:
+    valid_prompt, calculated_prompt = is_and_give_prompt_input_valid(
+        structure_prompt_answer, full_song_structure
+    )
+
+    if not valid_prompt:
         log(
-            "chosen structure: {}".format(str(slidegen.metadata["structure"])),
-            color="cyan",
+            "warning: prompt input '{}' is invalid, defaulting to full song structure".format(
+                structure_prompt_answer
+            ),
+            color="yellow",
         )
-        return structure_as_list(slidegen.metadata["structure"])
-    if not "-" in slidegen.chosen_structure:
-        log(
-            "chosen structure: {}".format(str(slidegen.chosen_structure)),
-            color="cyan",
-        )
-        return structure_as_list(str(slidegen.chosen_structure))
+        calculated_prompt = full_song_structure
+    return calculated_prompt
 
-    dash_index = str(slidegen.chosen_structure).find("-")
-    start_verse = str(slidegen.chosen_structure[:dash_index]).strip()
-    end_verse = str(slidegen.chosen_structure[dash_index + 1 :]).strip()
 
-    try:
-        if int(start_verse) >= int(end_verse):
-            error_msg("{} < {} must be true".format(start_verse, end_verse))
-        if start_verse not in slidegen.metadata["structure"]:
-            error_msg("structure {} unknown".format(start_verse))
-        if end_verse not in slidegen.metadata["structure"]:
-            error_msg("structure {} unknown".format(end_verse))
-    except (ValueError, IndexError):
-        error_msg("please choose a valid integer for the song structure")
+def is_and_give_prompt_input_valid(
+    prompt: str, full_structure: list
+) -> tuple[bool, str]:
+    if not match(
+        r"^(([0-9]+|R)|[0-9]+-[0-9]+)(,(([0-9]+|R)|[0-9]+-[0-9]+))*$", prompt
+    ):
+        return False, ""
 
-    start_index = full_structure_list.index(start_verse)
+    allowed_elements = get_unique_structure_elements(full_structure)
+    test_elements = prompt.split(",")
+    print("test elemets before loops: {}".format(test_elements))
+    for index, element in enumerate(test_elements):
+        if "-" in element:
+            splitted_dashpart = element.split("-")
+            if splitted_dashpart[0] >= splitted_dashpart[1]:
+                return False, ""
+            if splitted_dashpart[0] not in allowed_elements:
+                return False, ""
+            if splitted_dashpart[1] not in allowed_elements:
+                return False, ""
+
+            dotted_part = calculate_dashed_prompt_part(
+                full_structure, splitted_dashpart[0], splitted_dashpart[1]
+            )
+            dotted_part.reverse()
+            test_elements[index] = dotted_part[0]
+            for left_over_dotted_part_element in dotted_part[1:]:
+                test_elements.insert(index, left_over_dotted_part_element)
+        else:
+            if element not in allowed_elements:
+                return False, ""
+
+    return True, ",".join(test_elements)
+
+
+def calculate_dashed_prompt_part(
+    content: list, start_verse: str, end_verse: str
+) -> list:
+    content = list(content)
+    for i in content:
+        if i == ",":
+            content.remove(i)
+    start_index = content.index(start_verse)
     if start_index != 0:
-        if (
-            full_structure_list[0] == "R"
-            and full_structure_list[start_index - 1] == "R"
-        ):
+        if content[0] == "R" and content[start_index - 1] == "R":
             start_index -= 1
-    end_index = full_structure_list.index(end_verse)
-    if end_index != len(full_structure_list) - 1:
-        if (
-            full_structure_list[-1] == "R"
-            and full_structure_list[end_index + 1] == "R"
-        ):
+    end_index = content.index(end_verse)
+    if end_index != len(content) - 1:
+        if content[-1] == "R" and content[end_index + 1] == "R":
             end_index += 1
 
-    log("chosen structure: {}".format(str(slidegen.chosen_structure)))
-    return full_structure_list[start_index : end_index + 1]
+    return content[start_index : end_index + 1]

@@ -305,9 +305,10 @@ Here an example of how to setup the rclone variables. `RCLONE_REMOTE_DIR` sets t
 SSYNC_CACHE_DIR = "$XDG_CACHE_HOME/ssync"
 SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
 SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
+SSYNC_CHOSEN_FILE_NAMING = ".chosen-file.txt"
 ```
 
-`SSYNC_CACHE_DIR` sets the directory in which the checkfile and cachefile of `ssync.py` get placed. You can change their name by setting `SSYNC_CACHEFILE_NAMING` for the cachefile and `SSYNC_CHECKFILE_NAMING` for the checkfile.
+`SSYNC_CACHE_DIR` sets the directory in which the checkfile and cachefile of `ssync.py` get placed. You can change their name by setting `SSYNC_CACHEFILE_NAMING` for the cachefile and `SSYNC_CHECKFILE_NAMING` for the checkfile. Same for the cache file that stores the chosen prompt fzf answer in `SSYNC_CHOSEN_FILE_NAMING`.
 
 #### OBS Slide Settings
 
@@ -323,11 +324,7 @@ The slides are placed in subdirectories of `OBS_SLIDES_DIR` with the following n
 
 These are some issues and possible changes that will be addressed or at least considered by our future development efforts:
 
-- prevent all crashes:
-    - safe `PROMPT_INPUT` parsing
-- use caching, with checksum checks for changes in the source file and the `PROMPT_INPUT`
-- provide ssync with the song structure, display it to the user and prevent him from entering a prompt that would cause slidegen to terminate unsuccessfully
-- add more documentation, especially explaining the slide generation, but also dependencies and deployment
+- add more documentation, especially explaining the slide generation, but also dependencies and deployment and the `PROMPT_INPUT`
 - add tests
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
 

@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .parse_prompt import parse_prompt_input
+from .parse_prompt import parse_prompt_input, generate_final_prompt
 from .parse_file import (
     parse_metadata,
     parse_songtext,

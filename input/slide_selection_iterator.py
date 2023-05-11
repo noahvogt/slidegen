@@ -17,8 +17,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 
-from utils import log, create_min_obs_subdirs, error_msg, expand_dir
+from utils import (
+    log,
+    create_min_obs_subdirs,
+    error_msg,
+    expand_dir,
+)
 from slides import ClassicSongTemplate, ClassicStartSlide, ClassicSongSlide
+from input import parse_metadata, generate_final_prompt
 
 import config as const
 
@@ -44,7 +50,7 @@ def slide_selection_iterator(ssync):
             )
         )
     file_list_str = file_list_str[:-1]
-    tempfile_str = ".chosen-tempfile"
+    const.SSYNC_CHOSEN_FILE_NAMING = ".chosen-tempfile"
 
     index = 0
     while True:
@@ -56,18 +62,43 @@ def slide_selection_iterator(ssync):
             break
 
         file_list_str = file_list_str.replace("\n", "\\n")
-        os.system('printf "{}" | fzf > {}'.format(file_list_str, tempfile_str))
+        os.system(
+            'printf "{}" | fzf > {}'.format(
+                file_list_str, const.SSYNC_CHOSEN_FILE_NAMING
+            )
+        )
 
-        with open(
-            tempfile_str, encoding="utf-8", mode="r"
-        ) as tempfile_file_opener:
-            chosen_song_file = tempfile_file_opener.read()[:-1].strip()
+        chosen_song_file = read_chosen_song_file()
 
         if len(chosen_song_file) == 0:
             log("no slides chosen, skipping...")
         else:
+            src_dir = os.path.join(rclone_local_dir, chosen_song_file)
+            dest_dir = create_and_get_dest_dir(obs_slides_dir, index)
+
+            dummy_slidegen_instance = slidegen.Slidegen(
+                ClassicSongTemplate,
+                ClassicStartSlide,
+                ClassicSongSlide,
+                src_dir,
+                dest_dir,
+                "",
+            )
+            parse_metadata(dummy_slidegen_instance)
+            full_song_structure = dummy_slidegen_instance.metadata["structure"]
+            log(
+                "full song structure of '{}':\n{}".format(
+                    chosen_song_file,
+                    full_song_structure,
+                ),
+                color="magenta",
+            )
+
             structure_prompt_answer = input(
                 input_song_prompt + structure_prompt
+            ).strip()
+            calculated_prompt = generate_final_prompt(
+                structure_prompt_answer, full_song_structure
             )
 
             log(
@@ -75,22 +106,40 @@ def slide_selection_iterator(ssync):
                     chosen_song_file, const.OBS_SUBDIR_NAMING, index
                 )
             )
-            src_dir = os.path.join(rclone_local_dir, chosen_song_file)
-            dest_dir = os.path.join(
-                obs_slides_dir,
-                const.OBS_SUBDIR_NAMING + str(index),
-            )
-            os.mkdir(dest_dir)
 
-            slidegen_instance = slidegen.Slidegen(
+            executing_slidegen_instance = slidegen.Slidegen(
                 ClassicSongTemplate,
                 ClassicStartSlide,
                 ClassicSongSlide,
                 src_dir,
                 dest_dir,
-                structure_prompt_answer,
+                calculated_prompt,
             )
-            slidegen_instance.execute(ssync.disable_async)
+            executing_slidegen_instance.execute(ssync.disable_async)
 
-    if os.path.isfile(tempfile_str):
-        os.remove(tempfile_str)
+    remove_chosenfile()
+
+
+def remove_chosenfile() -> None:
+    try:
+        if os.path.isfile(const.SSYNC_CHOSEN_FILE_NAMING):
+            os.remove(const.SSYNC_CHOSEN_FILE_NAMING)
+    except (FileNotFoundError, PermissionError, IOError) as error:
+        error_msg("Failed to remove chosenfile. Reason: {}".format(error))
+
+
+def create_and_get_dest_dir(obs_slides_dir, index) -> str:
+    dest_dir = os.path.join(
+        obs_slides_dir,
+        const.OBS_SUBDIR_NAMING + str(index),
+    )
+    os.mkdir(dest_dir)
+    return dest_dir
+
+
+def read_chosen_song_file() -> str:
+    with open(
+        const.SSYNC_CHOSEN_FILE_NAMING, encoding="utf-8", mode="r"
+    ) as tempfile_file_opener:
+        chosen_song_file = tempfile_file_opener.read()[:-1].strip()
+    return chosen_song_file

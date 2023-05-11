@@ -30,6 +30,7 @@ def validate_ssync_config() -> None:
         "OBS_SLIDES_DIR": const.OBS_SLIDES_DIR,
         "OBS_SUBDIR_NAMING": const.OBS_SUBDIR_NAMING,
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
+        "SSYNC_CHOSEN_FILE_NAMING": const.SSYNC_CHOSEN_FILE_NAMING,
     }
     general_config_validator(needed_constants)
 

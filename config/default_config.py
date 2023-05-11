@@ -82,6 +82,7 @@ RCLONE_LOCAL_DIR = ""
 SSYNC_CACHE_DIR = ""
 SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
 SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
+SSYNC_CHOSEN_FILE_NAMING = ".chosen-file.txt"
 
 OBS_SLIDES_DIR = ""
 OBS_SUBDIR_NAMING = ""
