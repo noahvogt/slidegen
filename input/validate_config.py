@@ -20,7 +20,7 @@ from utils import log, error_msg
 import config as const
 
 
-def validate_ssync_config():
+def validate_ssync_config() -> None:
     needed_constants: dict = {
         "RCLONE_LOCAL_DIR": const.RCLONE_LOCAL_DIR,
         "RCLONE_REMOTE_DIR": const.RCLONE_REMOTE_DIR,
@@ -31,6 +31,18 @@ def validate_ssync_config():
         "OBS_SUBDIR_NAMING": const.OBS_SUBDIR_NAMING,
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
     }
+    general_config_validator(needed_constants)
+
+
+def validate_songchooser_config() -> None:
+    needed_constants: dict = {
+        "NEXTSONG_CACHE_FILE": const.NEXTSONG_CACHE_FILE,
+        "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
+    }
+    general_config_validator(needed_constants)
+
+
+def general_config_validator(needed_constants: dict) -> None:
     for key in needed_constants:
         if needed_constants.get(key) == "":
             error_msg("needed config entry '{}' is empty".format(key))

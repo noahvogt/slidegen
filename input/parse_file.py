@@ -86,3 +86,18 @@ def parse_songtext(slidegen) -> None:
         )
 
     slidegen.songtext = output_dict
+
+
+def get_songchooser_cachefile_content() -> list:
+    try:
+        with open(
+            const.NEXTSONG_CACHE_FILE, mode="r", encoding="utf8"
+        ) as cachefile_reader:
+            cachefile_content = cachefile_reader.readlines()
+    except (FileNotFoundError, PermissionError, IOError) as error:
+        error_msg(
+            "Failed to access cachefile in '{}'. Reason: {}".format(
+                const.NEXTSONG_CACHE_FILE, error
+            )
+        )
+    return cachefile_content

@@ -17,6 +17,26 @@ Both of these processes have *major downsides*: They are hard to automate, take 
 
 The only upside they have is that can be more intuitive for inexperienced computer users, but changing a text file template and uploading to a remote storage should not be too hard to manage and worth it as it has *none* of the above mentioned downsides.
 
+## Extra Scripts
+
+### next_song.py
+
+`next_song.py` checks which song was played last in a cachefile stored at `NEXTSONG_CACHE_FILE` of the form
+
+    YYYY-MM-DD
+    [0-9]+
+
+which for example can look like this:
+
+    2023-11-05
+    3
+
+It then increments the value up to `OBS_MIN_SUBDIRS` and cycles back to 1. After each increment, it writes to the cachefile and sends a hotkey `Ctrl + Shift + F${value}` with the `$value` being the just incremented variable - which can be intercepted by OBS to change to the respecting scene for the song.
+
+### force_song.py
+
+Instead of cycling like `next_song.py`, `force_song.py` takes an integer as single argument, sends the corresponding hotkey and saves the value to the same cachefile.
+
 ## Usage
 
 ### Commandline Interface
@@ -311,7 +331,6 @@ These are some issues and possible changes that will be addressed or at least co
 - add more documentation, especially explaining the slide generation, but also dependencies and deployment
 - add tests
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
-- add docs for extra scripts
 
 ## Licensing
 
