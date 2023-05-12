@@ -17,26 +17,6 @@ Both of these processes have *major downsides*: They are hard to automate, take 
 
 The only upside they have is that can be more intuitive for inexperienced computer users, but changing a text file template and uploading to a remote storage should not be too hard to manage and worth it as it has *none* of the above mentioned downsides.
 
-## Extra Scripts
-
-### next_song.py
-
-`next_song.py` checks which song was played last in a cachefile stored at `NEXTSONG_CACHE_FILE` of the form
-
-    YYYY-MM-DD
-    [0-9]+
-
-which for example can look like this:
-
-    2023-11-05
-    3
-
-It then increments the value up to `OBS_MIN_SUBDIRS` and cycles back to 1. After each increment, it writes to the cachefile and sends a hotkey `Ctrl + Shift + F${value}` with the `$value` being the just incremented variable - which can be intercepted by OBS to change to the respecting scene for the song.
-
-### force_song.py
-
-Instead of cycling like `next_song.py`, `force_song.py` takes an integer as single argument, sends the corresponding hotkey and saves the value to the same cachefile.
-
 ## Usage
 
 ### Commandline Interface
@@ -320,11 +300,47 @@ OBS_SUBDIR_NAMING = "Song "
 
 The slides are placed in subdirectories of `OBS_SLIDES_DIR` with the following naming: `${OBS_SUBDIR_NAMING}${NUM}` with `NUM` being the number - also an integer - of the song selected by ssync, starting by 1. So that OBS doesn't complain about missing directories, empty directories are created following the naming for subdirectories up until the number defined by `OBS_MIN_SUBDIRS`.
 
+## Installation / Deployment
+
+First, install a reasonably new version of
+
+- python3
+- some python packages that are not in the standard library using:
+
+    pip install -r requirements.txt
+
+Then clone the git repository somewhere, doesn't really matter. I often use
+
+    cd ~/.local/src
+    git clone https://github.com/noahvogt/slidegen.git
+
+From there, connect to your remote using rclone (better check the [rclone documentation](https://rclone.org/docs) directly) and edit your `config/config.py` in `~/.local/src/slidegen` as described above in the usage section. As a last step, you can setup symlinks of your needed executables to your `$PATH`, set desktop shortcuts or add them to your taskbar.
+
+## Extra Scripts
+
+### next_song.py
+
+`next_song.py` checks which song was played last in a cachefile stored at `NEXTSONG_CACHE_FILE` of the form
+
+    YYYY-MM-DD
+    [0-9]+
+
+which for example can look like this:
+
+    2023-11-05
+    3
+
+It then increments the value up to `OBS_MIN_SUBDIRS` and cycles back to 1. After each increment, it writes to the cachefile and sends a hotkey `Ctrl + Shift + F${value}` with the `$value` being the just incremented variable - which can be intercepted by OBS to change to the respecting scene for the song.
+
+### force_song.py
+
+Instead of cycling like `next_song.py`, `force_song.py` takes an integer as single argument, sends the corresponding hotkey and saves the value to the same cachefile.
+
 ## Roadmap
 
 These are some issues and possible changes that will be addressed or at least considered by our future development efforts:
 
-- add more documentation, especially explaining the slide generation, but also dependencies and deployment and the `PROMPT_INPUT`
+- add more documentation, especially explaining the slide generation, but also the `PROMPT_INPUT`
 - add tests
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
 

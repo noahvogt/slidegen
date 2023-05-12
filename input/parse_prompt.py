@@ -25,7 +25,6 @@ from utils import (
 
 
 def parse_prompt_input(slidegen) -> list:
-    full_structure_list = structure_as_list(slidegen.metadata["structure"])
     calculated_prompt = generate_final_prompt(
         str(slidegen.chosen_structure), slidegen.metadata["structure"]
     )
@@ -43,10 +42,11 @@ def generate_final_prompt(structure_prompt_answer, full_song_structure) -> str:
 
     if not valid_prompt:
         log(
-            "warning: prompt input '{}' is invalid, defaulting to full song structure".format(
+            "warning: prompt input '{}' is invalid, defaulting to full".format(
                 structure_prompt_answer
-            ),
-            color="yellow",
+            )
+            + "song structure",
+            color="cyan",
         )
         calculated_prompt = full_song_structure
     return calculated_prompt
@@ -62,7 +62,6 @@ def is_and_give_prompt_input_valid(
 
     allowed_elements = get_unique_structure_elements(full_structure)
     test_elements = prompt.split(",")
-    print("test elemets before loops: {}".format(test_elements))
     for index, element in enumerate(test_elements):
         if "-" in element:
             splitted_dashpart = element.split("-")

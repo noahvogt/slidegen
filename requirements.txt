@@ -1,0 +1,4 @@
+wand
+termcolor
+colorama
+pyautogui
