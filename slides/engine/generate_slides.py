@@ -32,7 +32,6 @@ def generate_slides(
     slidegen, slide_count, template_img, zfill_length, disable_async: bool
 ) -> None:
     log("generating song slides...")
-    # unique_structures: list = list(set(chosen_structure))
 
     current_slide_index: int = 0
 
@@ -102,7 +101,7 @@ def generate_slides(
                 Thread(
                     target=generate_song_slide,
                     args=(
-                        slidegen.song_slide_form,
+                        slidegen.slide_style.song_slide_form,
                         template_img,
                         structure_element_value,
                         slidegen,
@@ -125,7 +124,7 @@ def generate_slides(
 
 
 def generate_start_slide(slidegen, template_img, zfill_length, disable_async):
-    first_slide = slidegen.start_slide_form()
+    first_slide = slidegen.slide_style.start_slide_form()
     start_slide_img = first_slide.get_slide(
         template_img,
         slidegen.metadata["book"],
@@ -162,7 +161,7 @@ def generate_song_slide(
     disable_async,
 ):
     song_slide_img = song_slide.get_slide(
-        self=slidegen.song_slide_form(),
+        self=slidegen.slide_style.song_slide_form(),
         template_img=template_img,
         slide_text=structure_element_value,
         song_structure=slidegen.chosen_structure,

@@ -23,7 +23,6 @@ from utils import (
     error_msg,
     expand_dir,
 )
-from slides import ClassicSongTemplate, ClassicStartSlide, ClassicSongSlide
 from input import parse_metadata, generate_final_prompt
 
 import config as const
@@ -37,9 +36,96 @@ def slide_selection_iterator(ssync):
         "Choose song structure (leave blank for full song)"
         + " eg. [1,R,2,R] / [1-4]: "
     )
-    file_list_str = ""
     rclone_local_dir = expand_dir(const.RCLONE_LOCAL_DIR)
-    obs_slides_dir = expand_dir(const.OBS_SLIDES_DIR)
+
+    song_counter = 0
+    while True:
+        song_counter += 1
+        input_prompt_prefix = "[{}{}] ".format(
+            const.OBS_SUBDIR_NAMING, song_counter
+        )
+        prompt_answer = str(input(input_prompt_prefix + iterator_prompt))
+        if prompt_answer.lower() == "y":
+            create_min_obs_subdirs()
+            break
+
+        os.system(
+            'printf "{}" | fzf > {}'.format(
+                get_file_list_inside(rclone_local_dir),
+                const.SSYNC_CHOSEN_FILE_NAMING,
+            )
+        )
+
+        chosen_song_file = read_chosen_song_file()
+
+        if len(chosen_song_file) == 0:
+            log("no slides chosen, skipping...")
+        else:
+            src_dir = os.path.join(rclone_local_dir, chosen_song_file)
+            dest_dir = create_and_get_dest_dir(
+                expand_dir(const.OBS_SLIDES_DIR), song_counter
+            )
+
+            full_song_structure = get_structure_for_prompt(
+                ssync.slide_style, src_dir, dest_dir
+            )
+            log(
+                "full song structure of '{}':\n{}".format(
+                    chosen_song_file,
+                    full_song_structure,
+                ),
+                color="magenta",
+            )
+
+            structure_prompt_answer = input(
+                input_prompt_prefix + structure_prompt
+            ).strip()
+
+            log(
+                "generating slides '{}' to '{}{}'...".format(
+                    chosen_song_file, const.OBS_SUBDIR_NAMING, song_counter
+                )
+            )
+
+            generate_slides_for_selected_song(
+                ssync.slide_style,
+                src_dir,
+                dest_dir,
+                generate_final_prompt(
+                    structure_prompt_answer, full_song_structure
+                ),
+                ssync,
+            )
+
+    remove_chosenfile()
+
+
+def generate_slides_for_selected_song(
+    classic_slide_style, src_dir, dest_dir, calculated_prompt, ssync
+) -> None:
+    executing_slidegen_instance = slidegen.Slidegen(
+        classic_slide_style,
+        src_dir,
+        dest_dir,
+        calculated_prompt,
+    )
+    executing_slidegen_instance.execute(ssync.disable_async)
+
+
+def get_structure_for_prompt(classic_slide_style, src_dir, dest_dir):
+    dummy_slidegen_instance = slidegen.Slidegen(
+        classic_slide_style,
+        src_dir,
+        dest_dir,
+        "",
+    )
+    parse_metadata(dummy_slidegen_instance)
+    full_song_structure = dummy_slidegen_instance.metadata["structure"]
+    return full_song_structure
+
+
+def get_file_list_inside(rclone_local_dir):
+    file_list_str = ""
     try:
         for file in os.listdir(rclone_local_dir):
             file_list_str += file + "\n"
@@ -50,74 +136,8 @@ def slide_selection_iterator(ssync):
             )
         )
     file_list_str = file_list_str[:-1]
-    const.SSYNC_CHOSEN_FILE_NAMING = ".chosen-tempfile"
-
-    index = 0
-    while True:
-        index += 1
-        input_song_prompt = "[{}{}] ".format(const.OBS_SUBDIR_NAMING, index)
-        prompt_answer = str(input(input_song_prompt + iterator_prompt))
-        if prompt_answer.lower() == "y":
-            create_min_obs_subdirs()
-            break
-
-        file_list_str = file_list_str.replace("\n", "\\n")
-        os.system(
-            'printf "{}" | fzf > {}'.format(
-                file_list_str, const.SSYNC_CHOSEN_FILE_NAMING
-            )
-        )
-
-        chosen_song_file = read_chosen_song_file()
-
-        if len(chosen_song_file) == 0:
-            log("no slides chosen, skipping...")
-        else:
-            src_dir = os.path.join(rclone_local_dir, chosen_song_file)
-            dest_dir = create_and_get_dest_dir(obs_slides_dir, index)
-
-            dummy_slidegen_instance = slidegen.Slidegen(
-                ClassicSongTemplate,
-                ClassicStartSlide,
-                ClassicSongSlide,
-                src_dir,
-                dest_dir,
-                "",
-            )
-            parse_metadata(dummy_slidegen_instance)
-            full_song_structure = dummy_slidegen_instance.metadata["structure"]
-            log(
-                "full song structure of '{}':\n{}".format(
-                    chosen_song_file,
-                    full_song_structure,
-                ),
-                color="magenta",
-            )
-
-            structure_prompt_answer = input(
-                input_song_prompt + structure_prompt
-            ).strip()
-            calculated_prompt = generate_final_prompt(
-                structure_prompt_answer, full_song_structure
-            )
-
-            log(
-                "generating slides '{}' to '{}{}'...".format(
-                    chosen_song_file, const.OBS_SUBDIR_NAMING, index
-                )
-            )
-
-            executing_slidegen_instance = slidegen.Slidegen(
-                ClassicSongTemplate,
-                ClassicStartSlide,
-                ClassicSongSlide,
-                src_dir,
-                dest_dir,
-                calculated_prompt,
-            )
-            executing_slidegen_instance.execute(ssync.disable_async)
-
-    remove_chosenfile()
+    file_list_str = file_list_str.replace("\n", "\\n")
+    return file_list_str
 
 
 def remove_chosenfile() -> None:

@@ -20,6 +20,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import colorama
 
 from utils import clear_obs_slides_dir
+from slides import (
+    SlideStyle,
+    ClassicSongSlide,
+    ClassicSongTemplate,
+    ClassicStartSlide,
+)
 from input import (
     validate_ssync_config,
     slide_selection_iterator,
@@ -29,10 +35,11 @@ from sync import sync_slide_repo, save_new_checkfile, syncing_needed
 
 
 class Ssync:
-    def __init__(self, offline, sequential):
+    def __init__(self, offline: bool, sequential: bool, slide_style) -> None:
         validate_ssync_config()
         self.offline_flag_enabled = offline
         self.disable_async = sequential
+        self.slide_style = slide_style
 
     def execute(self):
         if syncing_needed(self):
@@ -45,7 +52,12 @@ class Ssync:
 def main() -> None:
     colorama.init()
 
-    ssync: Ssync = Ssync(*parse_ssync_args_as_tuple())
+    classic_slide_style = SlideStyle(
+        ClassicSongTemplate,  # pyright: ignore [reportGeneralTypeIssues]
+        ClassicStartSlide,  # pyright: ignore [reportGeneralTypeIssues]
+        ClassicSongSlide,  # pyright: ignore [reportGeneralTypeIssues]
+    )
+    ssync = Ssync(*parse_ssync_args_as_tuple(), slide_style=classic_slide_style)
     ssync.execute()
 
 

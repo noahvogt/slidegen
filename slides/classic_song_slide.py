@@ -22,6 +22,7 @@ from wand.color import Color
 
 import config as const
 
+from utils import get_empty_image
 from .song_slide import SongSlide
 
 

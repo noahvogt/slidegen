@@ -25,6 +25,7 @@ from slides import (
     ClassicSongTemplate,
     ClassicStartSlide,
     ClassicSongSlide,
+    SlideStyle,
     generate_slides,
     generate_song_template,
     count_number_of_slides_to_be_generated,
@@ -41,12 +42,10 @@ from input import (
 class Slidegen:
     def __init__(
         self,
-        song_template_form,
-        start_slide_form,
-        song_slide_form,
-        song_file_path,
-        output_dir,
-        chosen_structure,
+        slide_style: SlideStyle,
+        song_file_path: str,
+        output_dir: str,
+        chosen_structure: str | list,
     ) -> None:
         self.metadata: dict = {"": ""}
         self.songtext: dict = {"": ""}
@@ -54,10 +53,7 @@ class Slidegen:
         self.song_file_content: list = []
         self.output_dir: str = output_dir
         self.chosen_structure = chosen_structure
-        self.generated_slides: list = []
-        self.song_template_form = song_template_form
-        self.start_slide_form = start_slide_form
-        self.song_slide_form = song_slide_form
+        self.slide_style: SlideStyle = slide_style
 
     def execute(self, disable_async=False) -> None:
         self.parse_file()
@@ -85,12 +81,12 @@ class Slidegen:
 def main() -> None:
     colorama.init()
 
-    slidegen: Slidegen = Slidegen(
-        ClassicSongTemplate,
-        ClassicStartSlide,
-        ClassicSongSlide,
-        *parse_argv_as_tuple()
+    classic_slide_style = SlideStyle(
+        ClassicSongTemplate,  # pyright: ignore [reportGeneralTypeIssues]
+        ClassicStartSlide,  # pyright: ignore [reportGeneralTypeIssues]
+        ClassicSongSlide,  # pyright: ignore [reportGeneralTypeIssues]
     )
+    slidegen = Slidegen(classic_slide_style, *parse_argv_as_tuple())
     slidegen.execute()
 
 

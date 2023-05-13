@@ -23,6 +23,6 @@ from utils import (
 
 
 def generate_song_template(slidegen) -> Image:
-    song_template = slidegen.song_template_form()
+    song_template = slidegen.slide_style.song_template_form()
     log("generating template...")
     return song_template.get_template(slidegen.metadata["title"])
