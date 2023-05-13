@@ -330,11 +330,26 @@ which for example can look like this:
     2023-11-05
     3
 
-It then increments the value up to `OBS_MIN_SUBDIRS` and cycles back to 1. After each increment, it writes to the cachefile and sends a hotkey `Ctrl + Shift + F${value}` with the `$value` being the just incremented variable - which can be intercepted by OBS to change to the respecting scene for the song.
+It then increments the value up to `OBS_MIN_SUBDIRS` and cycles back to 1. After each increment, it writes to the cachefile and by default sends a hotkey `Ctrl + Shift + F${value}` with the `$value` being the just incremented variable - which can be intercepted by OBS to change to the respecting scene for the song. You can change the hotkey prefix, but not the last part with the function keys, for example the configuration to use `Ctrl + Alt + F${value}` would be
+
+```python
+OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX = ["ctrl", "alt"]
+```
+
+To transition to the new song, it sends another hotkey defined by the following default:
+
+```python
+OBS_TRANSITION_HOTKEY = ["ctrl", "shift", "f12"]
+```
+
 
 ### force_song.py
 
-Instead of cycling like `next_song.py`, `force_song.py` takes an integer as single argument, sends the corresponding hotkey and saves the value to the same cachefile.
+Instead of cycling like `next_song.py`, `force_song.py` takes an integer as single argument, sends the corresponding hotkey and saves the value to the same cachefile. For example, use
+
+    ./force_song.py 4
+
+to switch to the scene with song 4.
 
 ## Roadmap
 

@@ -45,7 +45,7 @@ def generate_final_prompt(structure_prompt_answer, full_song_structure) -> str:
             "warning: prompt input '{}' is invalid, defaulting to full".format(
                 structure_prompt_answer
             )
-            + "song structure",
+            + " song structure...",
             color="cyan",
         )
         calculated_prompt = full_song_structure

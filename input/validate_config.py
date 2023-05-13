@@ -39,6 +39,8 @@ def validate_songchooser_config() -> None:
     needed_constants: dict = {
         "NEXTSONG_CACHE_FILE": const.NEXTSONG_CACHE_FILE,
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
+        "OBS_TRANSITION_HOTKEY": const.OBS_TRANSITION_HOTKEY,
+        "OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX": const.OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX,
     }
     general_config_validator(needed_constants)
 

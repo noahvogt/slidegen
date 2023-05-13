@@ -24,13 +24,16 @@ from utils import (
     expand_dir,
 )
 from input import parse_metadata, generate_final_prompt
+from slides import SlideStyle
 
 import config as const
 
 import slidegen
 
 
-def slide_selection_iterator(ssync):
+def slide_selection_iterator(
+    disable_async_enabled: bool, slide_style: SlideStyle
+) -> None:
     iterator_prompt = "Exit now? [y/N]: "
     structure_prompt = (
         "Choose song structure (leave blank for full song)"
@@ -67,7 +70,7 @@ def slide_selection_iterator(ssync):
             )
 
             full_song_structure = get_structure_for_prompt(
-                ssync.slide_style, src_dir, dest_dir
+                slide_style, src_dir, dest_dir
             )
             log(
                 "full song structure of '{}':\n{}".format(
@@ -88,20 +91,24 @@ def slide_selection_iterator(ssync):
             )
 
             generate_slides_for_selected_song(
-                ssync.slide_style,
+                slide_style,
                 src_dir,
                 dest_dir,
                 generate_final_prompt(
                     structure_prompt_answer, full_song_structure
                 ),
-                ssync,
+                disable_async_enabled,
             )
 
     remove_chosenfile()
 
 
 def generate_slides_for_selected_song(
-    classic_slide_style, src_dir, dest_dir, calculated_prompt, ssync
+    classic_slide_style: SlideStyle,
+    src_dir: str,
+    dest_dir: str,
+    calculated_prompt: str | list[str],
+    disable_async_enabled: bool,
 ) -> None:
     executing_slidegen_instance = slidegen.Slidegen(
         classic_slide_style,
@@ -109,7 +116,7 @@ def generate_slides_for_selected_song(
         dest_dir,
         calculated_prompt,
     )
-    executing_slidegen_instance.execute(ssync.disable_async)
+    executing_slidegen_instance.execute(disable_async_enabled)
 
 
 def get_structure_for_prompt(classic_slide_style, src_dir, dest_dir):

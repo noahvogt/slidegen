@@ -23,8 +23,8 @@ from utils import log
 import config as const
 
 
-def syncing_needed(slidegen) -> bool:
-    if slidegen.offline_flag_enabled:
+def syncing_needed(offline_flag_enabled: bool) -> bool:
+    if offline_flag_enabled:
         log("skipping sync with remote", color="cyan")
         return False
 

@@ -16,8 +16,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from os import path
+from time import sleep
 
-from pyautogui import hotkey
+from pyautogui import keyDown, keyUp
 
 from utils import error_msg, log, calculate_yyyy_mm_dd_date
 import config as const
@@ -38,12 +39,26 @@ def make_sure_cachefile_exists() -> None:
             )
 
 
-def switch_to_song(song: int) -> None:
-    if song > const.OBS_MIN_SUBDIRS:
-        song = 1
-    log("sending hotkey Ctr + Shift + F{}".format(song), color="cyan")
-    hotkey("ctrl", "shift", "f{}".format(song))
-    create_cachfile_for_song(song)
+def switch_to_song(song_number: int) -> None:
+    if song_number > const.OBS_MIN_SUBDIRS:
+        song_number = 1
+    log("sending hotkey to switch to scene {}".format(song_number), "cyan")
+    scene_switch_hotkey = list(const.OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX)
+    scene_switch_hotkey.append("f{}".format(song_number))
+    safe_send_hotkey(scene_switch_hotkey)
+
+    log("sending hotkey to transition to scene {}".format(song_number), "cyan")
+    safe_send_hotkey(const.OBS_TRANSITION_HOTKEY)
+
+    create_cachfile_for_song(song_number)
+
+
+def safe_send_hotkey(hotkey: list, sleep_time=0.1) -> None:
+    for key in hotkey:
+        keyDown(key)
+    sleep(sleep_time)
+    for key in hotkey:
+        keyUp(key)
 
 
 def create_cachfile_for_song(song) -> None:

@@ -35,7 +35,7 @@ from input import (
     parse_prompt_input,
     parse_metadata,
     parse_songtext,
-    parse_argv_as_tuple,
+    parse_slidegen_argv_as_tuple,
 )
 
 
@@ -45,7 +45,7 @@ class Slidegen:
         slide_style: SlideStyle,
         song_file_path: str,
         output_dir: str,
-        chosen_structure: str | list,
+        chosen_structure: str | list[str],
     ) -> None:
         self.metadata: dict = {"": ""}
         self.songtext: dict = {"": ""}
@@ -86,7 +86,7 @@ def main() -> None:
         ClassicStartSlide,  # pyright: ignore [reportGeneralTypeIssues]
         ClassicSongSlide,  # pyright: ignore [reportGeneralTypeIssues]
     )
-    slidegen = Slidegen(classic_slide_style, *parse_argv_as_tuple())
+    slidegen = Slidegen(classic_slide_style, *parse_slidegen_argv_as_tuple())
     slidegen.execute()
 
 

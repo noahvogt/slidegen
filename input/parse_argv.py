@@ -16,11 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import argparse
+from dataclasses import dataclass
 
 from utils import log, error_msg, expand_dir
 
 
-def parse_argv_as_tuple() -> tuple:
+def parse_slidegen_argv_as_tuple() -> tuple:
     parser = argparse.ArgumentParser(
         prog="slidegen", description="slidegen - a slide generator."
     )
@@ -56,7 +57,7 @@ def parse_argv_as_tuple() -> tuple:
     except IndexError:
         chosen_structure = ""
 
-    log("parsing {}...".format(song_file_path))
+    log("parsing '{}'...".format(song_file_path))
     return song_file_path, output_dir, chosen_structure
 
 
@@ -77,3 +78,9 @@ def parse_ssync_args_as_tuple() -> tuple:
     )
     args = parser.parse_args()
     return args.offline, args.sequential
+
+
+@dataclass
+class SsyncFlags:
+    offline_enabled: bool
+    disable_async_enabled: bool

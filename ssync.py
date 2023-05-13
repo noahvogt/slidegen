@@ -30,23 +30,18 @@ from input import (
     validate_ssync_config,
     slide_selection_iterator,
     parse_ssync_args_as_tuple,
+    SsyncFlags,
 )
 from sync import sync_slide_repo, save_new_checkfile, syncing_needed
 
 
-class Ssync:
-    def __init__(self, offline: bool, sequential: bool, slide_style) -> None:
-        validate_ssync_config()
-        self.offline_flag_enabled = offline
-        self.disable_async = sequential
-        self.slide_style = slide_style
-
-    def execute(self):
-        if syncing_needed(self):
-            sync_slide_repo()
-            save_new_checkfile()
-        clear_obs_slides_dir()
-        slide_selection_iterator(self)
+def ssync(ssync_flags: SsyncFlags, slide_style: SlideStyle) -> None:
+    validate_ssync_config()
+    if syncing_needed(ssync_flags.offline_enabled):
+        sync_slide_repo()
+        save_new_checkfile()
+    clear_obs_slides_dir()
+    slide_selection_iterator(ssync_flags.disable_async_enabled, slide_style)
 
 
 def main() -> None:
@@ -57,8 +52,9 @@ def main() -> None:
         ClassicStartSlide,  # pyright: ignore [reportGeneralTypeIssues]
         ClassicSongSlide,  # pyright: ignore [reportGeneralTypeIssues]
     )
-    ssync = Ssync(*parse_ssync_args_as_tuple(), slide_style=classic_slide_style)
-    ssync.execute()
+    ssync_flags = SsyncFlags(*parse_ssync_args_as_tuple())
+
+    ssync(ssync_flags, classic_slide_style)
 
 
 if __name__ == "__main__":
