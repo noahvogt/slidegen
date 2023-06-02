@@ -304,6 +304,8 @@ The slides are placed in subdirectories of `OBS_SLIDES_DIR` with the following n
 
 First, install a reasonably new version of
 
+- git
+- imagemagick (If you are a windows user, select the c/c++ developer headers. Also you may need vcredist for imagemagick to work.)
 - python3
 - some python packages that are not in the standard library using:
 
