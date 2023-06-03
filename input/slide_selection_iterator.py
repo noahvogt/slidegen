@@ -53,8 +53,8 @@ def slide_selection_iterator(
             break
 
         os.system(
-            'printf "{}" | fzf > {}'.format(
-                get_file_list_inside(rclone_local_dir),
+            "cd {} && fzf > {}".format(
+                rclone_local_dir,
                 os.path.join(
                     const.SSYNC_CACHE_DIR, const.SSYNC_CHOSEN_FILE_NAMING
                 ),
