@@ -25,7 +25,7 @@ import config as const
 def sync_slide_repo() -> None:
     log("syncing with remote slide repository...")
     system(
-        "rclone sync -v {} {}".format(
+        'rclone sync -v "{}" "{}"'.format(
             const.RCLONE_REMOTE_DIR, const.RCLONE_LOCAL_DIR
         )
     )

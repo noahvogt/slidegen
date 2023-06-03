@@ -55,7 +55,9 @@ def slide_selection_iterator(
         os.system(
             'printf "{}" | fzf > {}'.format(
                 get_file_list_inside(rclone_local_dir),
-                const.SSYNC_CHOSEN_FILE_NAMING,
+                os.path.join(
+                    const.SSYNC_CACHE_DIR, const.SSYNC_CHOSEN_FILE_NAMING
+                ),
             )
         )
 
@@ -149,8 +151,14 @@ def get_file_list_inside(rclone_local_dir):
 
 def remove_chosenfile() -> None:
     try:
-        if os.path.isfile(const.SSYNC_CHOSEN_FILE_NAMING):
-            os.remove(const.SSYNC_CHOSEN_FILE_NAMING)
+        if os.path.isfile(
+            os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHOSEN_FILE_NAMING)
+        ):
+            os.remove(
+                os.path.join(
+                    const.SSYNC_CACHE_DIR, const.SSYNC_CHOSEN_FILE_NAMING
+                ),
+            )
     except (FileNotFoundError, PermissionError, IOError) as error:
         error_msg("Failed to remove chosenfile. Reason: {}".format(error))
 
@@ -166,7 +174,9 @@ def create_and_get_dest_dir(obs_slides_dir, index) -> str:
 
 def read_chosen_song_file() -> str:
     with open(
-        const.SSYNC_CHOSEN_FILE_NAMING, encoding="utf-8", mode="r"
+        os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHOSEN_FILE_NAMING),
+        encoding="utf-8",
+        mode="r",
     ) as tempfile_file_opener:
         chosen_song_file = tempfile_file_opener.read()[:-1].strip()
     return chosen_song_file

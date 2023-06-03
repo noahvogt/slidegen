@@ -33,7 +33,7 @@ def syncing_needed(offline_flag_enabled: bool) -> bool:
 
     log("checking for remote changes...")
     os.system(
-        "rclone md5sum {} --checkfile {} > {} 2> {}".format(
+        'rclone md5sum "{}" --checkfile "{}" > "{}" 2> "{}"'.format(
             const.RCLONE_REMOTE_DIR,
             os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHECKFILE_NAMING),
             os.devnull,

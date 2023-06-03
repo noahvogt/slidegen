@@ -28,7 +28,7 @@ def save_new_checkfile() -> None:
     cache_dir = expand_dir(const.SSYNC_CACHE_DIR)
     log("saving new checkfile...")
     system(
-        'rclone md5sum {} > "{}"'.format(
+        'rclone md5sum "{}" > "{}"'.format(
             const.RCLONE_REMOTE_DIR,
             path.join(cache_dir, const.SSYNC_CHECKFILE_NAMING),
         )
