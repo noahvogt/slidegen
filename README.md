@@ -306,7 +306,6 @@ First, install a reasonably new version of
 
 - [git](https://git-scm.com/)
 - [fzf](https://github.com/junegunn/fzf)
-- printf (Provided by coreutils. Windows user should download gnuwin32.)
 - [imagemagick](https://imagemagick.org/script/download.php) (If you are a windows user, select the c/c++ developer headers. Also you may need vcredist for imagemagick to work.)
 - [python3](https://www.python.org/)
 - some python packages that are not in the standard library using:

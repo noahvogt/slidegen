@@ -28,7 +28,7 @@ def make_sure_cachefile_exists() -> None:
     if not path.isfile(const.NEXTSONG_CACHE_FILE):
         try:
             with open(
-                const.NEXTSONG_CACHE_FILE, mode="w+", encoding="utf8"
+                const.NEXTSONG_CACHE_FILE, mode="w+", encoding="utf-8-sig"
             ) as file_creator:
                 file_creator.write("")
         except (FileNotFoundError, PermissionError, IOError) as error:
@@ -65,7 +65,7 @@ def create_cachfile_for_song(song) -> None:
     log("writing song {} to cachefile...".format(song))
     try:
         with open(
-            const.NEXTSONG_CACHE_FILE, mode="w", encoding="utf8"
+            const.NEXTSONG_CACHE_FILE, mode="w", encoding="utf-8-sig"
         ) as file_writer:
             file_writer.write(calculate_yyyy_mm_dd_date() + "\n")
             file_writer.write(str(song) + "\n")

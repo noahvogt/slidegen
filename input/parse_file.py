@@ -30,7 +30,9 @@ import config as const
 def parse_metadata(slidegen) -> None:
     metadata_dict = dict.fromkeys(const.METADATA_STRINGS)
     try:
-        with open(slidegen.song_file_path, mode="r", encoding="utf8") as opener:
+        with open(
+            slidegen.song_file_path, mode="r", encoding="utf-8-sig"
+        ) as opener:
             content = opener.readlines()
     except IOError:
         error_msg(
@@ -91,7 +93,7 @@ def parse_songtext(slidegen) -> None:
 def get_songchooser_cachefile_content() -> list:
     try:
         with open(
-            const.NEXTSONG_CACHE_FILE, mode="r", encoding="utf8"
+            const.NEXTSONG_CACHE_FILE, mode="r", encoding="utf-8-sig"
         ) as cachefile_reader:
             cachefile_content = cachefile_reader.readlines()
     except (FileNotFoundError, PermissionError, IOError) as error:

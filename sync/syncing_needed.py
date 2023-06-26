@@ -44,7 +44,7 @@ def syncing_needed(offline_flag_enabled: bool) -> bool:
     with open(
         os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING),
         mode="r",
-        encoding="utf-8",
+        encoding="utf-8-sig",
     ) as cachefile_reader:
         cachefile_content = cachefile_reader.readlines()
     for line in cachefile_content:

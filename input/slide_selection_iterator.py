@@ -175,7 +175,7 @@ def create_and_get_dest_dir(obs_slides_dir, index) -> str:
 def read_chosen_song_file() -> str:
     with open(
         os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHOSEN_FILE_NAMING),
-        encoding="utf-8",
+        encoding="utf-8-sig",
         mode="r",
     ) as tempfile_file_opener:
         chosen_song_file = tempfile_file_opener.read()[:-1].strip()
