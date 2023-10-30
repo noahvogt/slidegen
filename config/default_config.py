@@ -79,6 +79,8 @@ METADATA_STRINGS = ("title", "book", "text", "melody", "structure")
 RCLONE_REMOTE_DIR = ""
 RCLONE_LOCAL_DIR = ""
 
+FZF_ARGS = ""
+
 SSYNC_CACHE_DIR = ""
 SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
 SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"

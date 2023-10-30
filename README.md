@@ -278,6 +278,13 @@ RCLONE_LOCAL_DIR = "/home/billy/Documents/songrepo"
 
 Here an example of how to setup the rclone variables. `RCLONE_REMOTE_DIR` sets the rclone remote directory in the typical rclone format and `RCLONE_LOCAL_DIR` is the local directory on your machine that rclone syncs to. For more information, please check the [rclone documentation](https://rclone.org/docs/).
 
+#### fzf Arguments
+
+```python
+FZF_ARGS = "-i"
+```
+
+Pass commandline arguments to the fuzzy finder [fzf](https://github.com/junegunn/fzf). The example invokes the option for matching case-insensitive. By default, no arguments are passed to fzf.
 
 #### SSync Cache
 
