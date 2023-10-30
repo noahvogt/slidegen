@@ -368,6 +368,7 @@ These are some issues and possible changes that will be addressed or at least co
 - add more documentation, especially explaining the slide generation, but also the `PROMPT_INPUT`
 - add tests
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
+- add warnings that indicate potential problems with rclone syncing
 
 ## Licensing
 
