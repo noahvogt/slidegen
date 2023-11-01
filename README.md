@@ -371,6 +371,7 @@ These are some issues and possible changes that will be addressed or at least co
 - add warnings that indicate potential problems with rclone syncing
 - use obs websocket connection, cleaner that transition hotkeys
 - add (semantic) versioning, maybe even display on program run as text
+- add not-yet-public streaming workflow scripts
 
 ## Licensing
 
