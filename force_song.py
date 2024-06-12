@@ -22,7 +22,7 @@ from sys import argv
 
 from utils import (
     error_msg,
-    make_sure_cachefile_exists,
+    make_sure_file_exists,
     switch_to_song,
 )
 from input import validate_songchooser_config
@@ -47,7 +47,7 @@ def exit_if_force_int_is_illegal():
 
 def main() -> None:
     validate_songchooser_config()
-    make_sure_cachefile_exists()
+    make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
     exit_if_force_int_is_illegal()
     switch_to_song(get_force_int())
 

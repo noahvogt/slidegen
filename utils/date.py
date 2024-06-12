@@ -16,7 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from datetime import date
+from time import time
 
 
-def calculate_yyyy_mm_dd_date() -> str:
+def get_yyyy_mm_dd_date() -> str:
     return date.strftime(date.today(), "%Y-%m-%d")
+
+
+def get_unix_milis() -> int:
+    return int(time() * 1000)

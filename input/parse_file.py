@@ -22,6 +22,7 @@ from utils import (
     structure_as_list,
     get_unique_structure_elements,
     get_songtext_by_structure,
+    expand_dir,
 )
 
 import config as const
@@ -90,16 +91,17 @@ def parse_songtext(slidegen) -> None:
     slidegen.songtext = output_dict
 
 
-def get_songchooser_cachefile_content() -> list:
+def get_cachefile_content(cachefile: str) -> list:
+    expanded_path = expand_dir(cachefile)
     try:
         with open(
-            const.NEXTSONG_CACHE_FILE, mode="r", encoding="utf-8-sig"
+            expanded_path, mode="r", encoding="utf-8-sig"
         ) as cachefile_reader:
             cachefile_content = cachefile_reader.readlines()
     except (FileNotFoundError, PermissionError, IOError) as error:
         error_msg(
             "Failed to access cachefile in '{}'. Reason: {}".format(
-                const.NEXTSONG_CACHE_FILE, error
+                expanded_path, error
             )
         )
     return cachefile_content

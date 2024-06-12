@@ -20,22 +20,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from re import match
 
 from utils import (
-    calculate_yyyy_mm_dd_date,
+    get_yyyy_mm_dd_date,
     switch_to_song,
-    make_sure_cachefile_exists,
+    make_sure_file_exists,
 )
-from input import get_songchooser_cachefile_content, validate_songchooser_config
+from input import get_cachefile_content, validate_songchooser_config
+import config as const
 
 
 def cycle_to_next_song() -> None:
-    cachefile_content = get_songchooser_cachefile_content()
+    cachefile_content = get_cachefile_content(const.NEXTSONG_CACHE_FILE)
     if (
         not (
             len(cachefile_content) == 2
             and match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}$", cachefile_content[0])
             and match(r"^[0-9]+$", cachefile_content[1])
         )
-        or cachefile_content[0].strip() != calculate_yyyy_mm_dd_date()
+        or cachefile_content[0].strip() != get_yyyy_mm_dd_date()
     ):
         switch_to_song(1)
     else:
@@ -44,7 +45,7 @@ def cycle_to_next_song() -> None:
 
 def main() -> None:
     validate_songchooser_config()
-    make_sure_cachefile_exists()
+    make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
     cycle_to_next_song()
 
 

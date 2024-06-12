@@ -17,24 +17,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from os import path
 from time import sleep
+from re import match
 
 from pyautogui import keyDown, keyUp
 
-from utils import error_msg, log, calculate_yyyy_mm_dd_date
+from utils import error_msg, log, get_yyyy_mm_dd_date
 import config as const
 
 
-def make_sure_cachefile_exists() -> None:
-    if not path.isfile(const.NEXTSONG_CACHE_FILE):
+def make_sure_file_exists(cachefile: str) -> None:
+    if not path.isfile(cachefile):
         try:
             with open(
-                const.NEXTSONG_CACHE_FILE, mode="w+", encoding="utf-8-sig"
+                cachefile, mode="w+", encoding="utf-8-sig"
             ) as file_creator:
                 file_creator.write("")
         except (FileNotFoundError, PermissionError, IOError) as error:
             error_msg(
-                "Failed to create cachefile in '{}'. Reason: {}".format(
-                    const.NEXTSONG_CACHE_FILE, error
+                "Failed to create file in '{}'. Reason: {}".format(
+                    cachefile, error
                 )
             )
 
@@ -67,7 +68,7 @@ def create_cachfile_for_song(song) -> None:
         with open(
             const.NEXTSONG_CACHE_FILE, mode="w", encoding="utf-8-sig"
         ) as file_writer:
-            file_writer.write(calculate_yyyy_mm_dd_date() + "\n")
+            file_writer.write(get_yyyy_mm_dd_date() + "\n")
             file_writer.write(str(song) + "\n")
     except (FileNotFoundError, PermissionError, IOError) as error:
         error_msg(
@@ -75,3 +76,23 @@ def create_cachfile_for_song(song) -> None:
                 const.NEXTSONG_CACHE_FILE, error
             )
         )
+
+
+def is_valid_cd_record_checkfile(
+    cachefile_content: list, yyyy_mm_dd: str
+) -> bool:
+    return (
+        len(cachefile_content) == 5
+        # YYYY-MM-DD
+        and bool(match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}$", cachefile_content[0]))
+        # last marker
+        and bool(match(r"^[0-9]+$", cachefile_content[1]))
+        # pid of ffmpeg recording instance
+        and bool(match(r"^[0-9]+$", cachefile_content[2]))
+        # unix milis @ recording start
+        and bool(match(r"^[0-9]+$", cachefile_content[3]))
+        # unix milis @ last track
+        and bool(match(r"^[0-9]+$", cachefile_content[4]))
+        # date matches today
+        and cachefile_content[0].strip() == yyyy_mm_dd
+    )

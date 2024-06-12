@@ -45,6 +45,16 @@ def validate_songchooser_config() -> None:
     general_config_validator(needed_constants)
 
 
+def validate_cd_record_config() -> None:
+    needed_constants: dict = {
+        "CD_RECORD_CACHEFILE": const.CD_RECORD_CACHEFILE,
+        "CD_RECORD_OUTPUT_BASEDIR": const.CD_RECORD_OUTPUT_BASEDIR,
+        "CD_RECORD_FFMPEG_INPUT_ARGS": const.CD_RECORD_FFMPEG_INPUT_ARGS,
+        "CD_RECORD_MAX_SECONDS": const.CD_RECORD_MAX_SECONDS,
+    }
+    general_config_validator(needed_constants)
+
+
 def general_config_validator(needed_constants: dict) -> None:
     for key in needed_constants:
         if needed_constants.get(key) == "":
