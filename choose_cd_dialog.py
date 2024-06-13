@@ -17,92 +17,62 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import sys
+from os import listdir
+
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication,
     QDialog,
-    QVBoxLayout,
-    QRadioButton,
-    QPushButton,
     QMessageBox,
-    QButtonGroup,
-    QScrollArea,
-    QWidget,
 )
-
-from PyQt5.QtGui import QColor, QIcon  # pylint: disable=all
 
 from utils import (
-    get_yyyy_mm_dd_date,
-    make_sure_file_exists,
-    is_valid_cd_record_checkfile,
+    burn_cd_of_day,
     log,
 )
-from input import get_cachefile_content, validate_cd_record_config
+from input import (
+    validate_cd_record_config,
+    RadioButtonDialog,
+    InfoMsgBox,
+)
 import config as const
 
 
-def stop_cd_recording() -> None:
-    cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
-    yyyy_mm_dd = get_yyyy_mm_dd_date()
+def choose_cd() -> list[str]:
+    # pylint: disable=unused-variable
+    app = QApplication([])
+    try:
+        dirs = sorted(listdir(const.CD_RECORD_OUTPUT_BASEDIR))
+        dirs.reverse()
 
-    if is_valid_cd_record_checkfile(cachefile_content, yyyy_mm_dd):
+        if not dirs:
+            return [
+                f"Did not find any CD's in: {const.CD_RECORD_OUTPUT_BASEDIR}.",
+                "",
+            ]
+
+        dialog = RadioButtonDialog(dirs, "Choose a CD to Burn")
+        if dialog.exec_() == QDialog.Accepted:
+            log(f"Burning CD for day: {dialog.chosen}")
+            return ["", dialog.chosen]
+        return ["ignore", ""]
+    except (FileNotFoundError, PermissionError, IOError):
         pass
 
-
-class RadioButtonDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Choose a CD to Burn")
-
-        master_layout = QVBoxLayout(self)
-
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        master_layout.addWidget(scroll_area)
-
-        scroll_content = QWidget()
-        scroll_area.setWidget(scroll_content)
-        scroll_area_layout = QVBoxLayout(scroll_content)
-
-        self.radio_button_group = QButtonGroup(self)
-
-        self.radio_buttons = []
-        for i in range(1, 101):
-            radio_button = QRadioButton(f"Radio Button {i}")
-            if i == 1:
-                radio_button.setChecked(True)
-            self.radio_buttons.append(radio_button)
-            self.radio_button_group.addButton(radio_button)
-            scroll_area_layout.addWidget(radio_button)
-
-        ok_button = QPushButton("OK")
-        ok_button.clicked.connect(self.accept)
-        master_layout.addWidget(ok_button)
-
-    def accept(self):
-        selected_button = self.radio_button_group.checkedButton()
-        if selected_button:
-            QMessageBox.information(
-                self, "Selection", f"You selected: {selected_button.text()}"
-            )
-            super().accept()
-        else:
-            QMessageBox.warning(
-                self,
-                "No Selection",
-                "Please select an option before proceeding.",
-            )
+    return [
+        f"Failed to access directory: {const.CD_RECORD_OUTPUT_BASEDIR}.",
+        "",
+    ]
 
 
-def main() -> None:
-    validate_cd_record_config()
-    make_sure_file_exists(const.CD_RECORD_CACHEFILE)
-
-    app = QApplication([])
-    dialog = RadioButtonDialog()
-    if dialog.exec_() == QDialog.Accepted:
-        print("Dialog accepted.")
+def choose_and_burn_cd():
+    msg, yyyy_mm_dd = choose_cd()
+    if msg == "":
+        burn_cd_of_day(yyyy_mm_dd)
+    elif msg != "ignore":
+        InfoMsgBox(QMessageBox.Critical, "Error", msg)
 
 
 if __name__ == "__main__":
-    main()
+    validate_cd_record_config()
+    choose_and_burn_cd()

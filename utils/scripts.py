@@ -15,13 +15,35 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import sys
 from os import path
+from subprocess import Popen
+from shlex import split
 from time import sleep
 from re import match
 
 from pyautogui import keyDown, keyUp
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+    QMessageBox,
+)
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QDialog,
+)
+from PyQt5.QtCore import QTimer  # pylint: disable=no-name-in-module
 
-from utils import error_msg, log, get_yyyy_mm_dd_date
+from utils import (
+    log,
+    error_msg,
+    get_yyyy_mm_dd_date,
+    expand_dir,
+)
+from input import (
+    validate_cd_record_config,
+    RadioButtonDialog,
+    InfoMsgBox,
+)
+from os_agnostic import get_cd_drives, eject_drive
 import config as const
 
 
@@ -38,6 +60,34 @@ def make_sure_file_exists(cachefile: str) -> None:
                     cachefile, error
                 )
             )
+
+
+def choose_right_cd_drive(drives: list) -> str:
+    if len(drives) != 1:
+        log("Warning: More than one cd drive found", color="yellow")
+        if (
+            const.CD_RECORD_PREFERED_DRIVE in drives
+            and const.CD_RECORD_PREFERED_DRIVE != ""
+        ):
+            return const.CD_RECORD_PREFERED_DRIVE
+
+        dialog = RadioButtonDialog(drives, "Choose a CD to Burn")
+        if dialog.exec_() == QDialog.Accepted:
+            print(f"Dialog accepted: {dialog.chosen}")
+            return dialog.chosen
+        log("Warning: Choosing first cd drive...", color="yellow")
+
+    return drives[0]
+
+
+def get_burn_cmd(cd_drive: str, yyyy_mm_dd) -> str:
+    cue_sheet_path = path.join(
+        expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd, "sheet.cue"
+    )
+    return (
+        f"cdrecord -pad dev={cd_drive} -dao -swab -text -audio "
+        + f"-cuefile={cue_sheet_path}"
+    )
 
 
 def switch_to_song(song_number: int) -> None:
@@ -96,3 +146,65 @@ def is_valid_cd_record_checkfile(
         # date matches today
         and cachefile_content[0].strip() == yyyy_mm_dd
     )
+
+
+class CDBurnerGUI:
+    def __init__(self, cd_drive: str, yyyy_mm_dd: str):
+        self.app = QApplication([])
+        self.drive = cd_drive
+        self.yyyy_mm_dd = yyyy_mm_dd
+        self.exit_code = 1
+        self.show_burning_msg_box()
+        self.start_burn_subprocess()
+        self.app.exec_()
+
+    def burning_successful(self) -> bool:
+        if self.exit_code == 0:
+            return True
+        return False
+
+    def show_burning_msg_box(self):
+        self.message_box = QMessageBox()
+        self.message_box.setWindowTitle("Info")
+        self.message_box.setText("Burning CD...")
+        self.message_box.setInformativeText(
+            "Please wait for a few minutes. You can close this Window, as "
+            + "there will spawn another window after the operation is "
+            + "finished."
+        )
+
+        self.message_box.show()
+
+    def start_burn_subprocess(self):
+        process = Popen(split(get_burn_cmd(self.drive, self.yyyy_mm_dd)))
+
+        while process.poll() is None:
+            QApplication.processEvents()
+        self.message_box.accept()
+
+        # Yeah this is hacky but it doesn't work when calling quit directly
+        QTimer.singleShot(0, self.app.quit)
+        self.exit_code = process.returncode
+
+
+def burn_cd_of_day(yyyy_mm_dd: str) -> None:
+    validate_cd_record_config()
+    make_sure_file_exists(const.CD_RECORD_CACHEFILE)
+
+    cd_drives = get_cd_drives()
+    if not cd_drives:
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            "Error: Could not find a CD-ROM. Please try again",
+        )
+        sys.exit(1)
+    drive = choose_right_cd_drive(cd_drives)
+
+    burn_success = CDBurnerGUI(drive, yyyy_mm_dd).burning_successful()
+    if burn_success:
+        InfoMsgBox(QMessageBox.Info, "Info", "Successfully burned CD.")
+    else:
+        InfoMsgBox(QMessageBox.Critical, "Error", "Error: Failed to burn CD.")
+
+    eject_drive(drive)

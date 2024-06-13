@@ -15,20 +15,4 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .log import error_msg, warn, log
-from .strings import (
-    get_songtext_by_structure,
-    structure_as_list,
-    get_unique_structure_elements,
-)
-from .img import get_empty_image
-from .create_min_obs_subdirs import create_min_obs_subdirs
-from .clear_obs_slides_dir import clear_obs_slides_dir
-from .path import expand_dir
-from .date import get_yyyy_mm_dd_date, get_unix_milis
-from .scripts import (
-    make_sure_file_exists,
-    switch_to_song,
-    is_valid_cd_record_checkfile,
-    burn_cd_of_day,
-)
+from .cd import eject_drive, get_cd_drives
