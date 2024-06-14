@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from os import path
+from os import path, listdir
 from subprocess import Popen
 from shlex import split
 from time import sleep
@@ -80,13 +80,15 @@ def choose_right_cd_drive(drives: list) -> str:
     return drives[0]
 
 
-def get_burn_cmd(cd_drive: str, yyyy_mm_dd) -> str:
+def get_burn_cmd(cd_drive: str, yyyy_mm_dd, padded_zfill_num: str) -> str:
     cue_sheet_path = path.join(
-        expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd, "sheet.cue"
+        expand_dir(const.CD_RECORD_OUTPUT_BASEDIR),
+        yyyy_mm_dd,
+        f"sheet-{padded_zfill_num}.cue",
     )
     return (
         f"cdrecord -pad dev={cd_drive} -dao -swab -text -audio "
-        + f"-cuefile={cue_sheet_path}"
+        + f"-cuefile='{cue_sheet_path}'"
     )
 
 
@@ -128,31 +130,54 @@ def create_cachfile_for_song(song) -> None:
         )
 
 
+def mark_end_of_recording(cachefile_content: list) -> None:
+    cachefile = expand_dir(const.CD_RECORD_CACHEFILE)
+
+    log("marking end of recording...")
+    try:
+        with open(cachefile, mode="w+", encoding="utf-8-sig") as file_writer:
+            file_writer.write(cachefile_content[0].strip() + "\n")
+            file_writer.write("9001\n")
+            file_writer.write(cachefile_content[2].strip() + "\n")
+            file_writer.write(cachefile_content[3].strip() + "\n")
+            file_writer.write(cachefile_content[4].strip() + "\n")
+            file_writer.write(cachefile_content[5].strip() + "\n")
+    except (FileNotFoundError, PermissionError, IOError) as error:
+        error_msg(
+            "Failed to write to cachefile '{}'. Reason: {}".format(
+                cachefile, error
+            )
+        )
+
+
 def is_valid_cd_record_checkfile(
     cachefile_content: list, yyyy_mm_dd: str
 ) -> bool:
     return (
-        len(cachefile_content) == 5
+        len(cachefile_content) == 6
         # YYYY-MM-DD
         and bool(match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}$", cachefile_content[0]))
-        # last marker
-        and bool(match(r"^[0-9]+$", cachefile_content[1]))
+        # last set marker
+        and bool(match(r"^[0-9][0-9]?$", cachefile_content[1]))
         # pid of ffmpeg recording instance
         and bool(match(r"^[0-9]+$", cachefile_content[2]))
         # unix milis @ recording start
         and bool(match(r"^[0-9]+$", cachefile_content[3]))
         # unix milis @ last track
         and bool(match(r"^[0-9]+$", cachefile_content[4]))
+        # cd number
+        and bool(match(r"^[0-9]+$", cachefile_content[5]))
         # date matches today
         and cachefile_content[0].strip() == yyyy_mm_dd
     )
 
 
 class CDBurnerGUI:
-    def __init__(self, cd_drive: str, yyyy_mm_dd: str):
+    def __init__(self, cd_drive: str, yyyy_mm_dd: str, cd_num: str):
         self.app = QApplication([])
         self.drive = cd_drive
         self.yyyy_mm_dd = yyyy_mm_dd
+        self.cd_num = cd_num
         self.exit_code = 1
         self.show_burning_msg_box()
         self.start_burn_subprocess()
@@ -176,7 +201,9 @@ class CDBurnerGUI:
         self.message_box.show()
 
     def start_burn_subprocess(self):
-        process = Popen(split(get_burn_cmd(self.drive, self.yyyy_mm_dd)))
+        process = Popen(
+            split(get_burn_cmd(self.drive, self.yyyy_mm_dd, self.cd_num))
+        )
 
         while process.poll() is None:
             QApplication.processEvents()
@@ -187,10 +214,52 @@ class CDBurnerGUI:
         self.exit_code = process.returncode
 
 
-def burn_cd_of_day(yyyy_mm_dd: str) -> None:
+def burn_cds_of_day(yyyy_mm_dd: str) -> None:
     validate_cd_record_config()
     make_sure_file_exists(const.CD_RECORD_CACHEFILE)
 
+    try:
+        target_dir = path.join(
+            expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd
+        )
+        if not path.isfile(target_dir):
+            exit_as_no_cds_found(target_dir)
+
+        target_files = sorted(listdir(target_dir))
+        cue_sheets = []
+        for file in target_files:
+            if file.endswith(".cue") and len(file) == 17:
+                cue_sheets.append(file)
+
+        if not target_files:
+            exit_as_no_cds_found(target_dir)
+
+        if len(cue_sheets) == 1:
+            burn_and_eject_cd(yyyy_mm_dd, "0000001")
+        else:
+            for num, file in enumerate(cue_sheets):
+                log(f"file found: {file}")
+
+    except (FileNotFoundError, PermissionError, IOError):
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            "Error: Could not access directory: "
+            + f"'{const.CD_RECORD_OUTPUT_BASEDIR}'",
+        )
+        sys.exit(1)
+
+
+def exit_as_no_cds_found(target_dir):
+    InfoMsgBox(
+        QMessageBox.Critical,
+        "Error",
+        f"Error: Did not find any CD's in: {target_dir}.",
+    )
+    sys.exit(1)
+
+
+def burn_and_eject_cd(yyyy_mm_dd: str, padded_cd_num: str) -> None:
     cd_drives = get_cd_drives()
     if not cd_drives:
         InfoMsgBox(
@@ -201,7 +270,9 @@ def burn_cd_of_day(yyyy_mm_dd: str) -> None:
         sys.exit(1)
     drive = choose_right_cd_drive(cd_drives)
 
-    burn_success = CDBurnerGUI(drive, yyyy_mm_dd).burning_successful()
+    burn_success = CDBurnerGUI(
+        drive, yyyy_mm_dd, padded_cd_num
+    ).burning_successful()
     if burn_success:
         InfoMsgBox(QMessageBox.Info, "Info", "Successfully burned CD.")
     else:

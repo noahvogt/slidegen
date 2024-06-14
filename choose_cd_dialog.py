@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
 )
 
 from utils import (
-    burn_cd_of_day,
+    burn_cds_of_day,
     log,
 )
 from input import (
@@ -38,7 +38,7 @@ from input import (
 import config as const
 
 
-def choose_cd() -> list[str]:
+def choose_cd_day() -> list[str]:
     # pylint: disable=unused-variable
     app = QApplication([])
     try:
@@ -66,9 +66,9 @@ def choose_cd() -> list[str]:
 
 
 def choose_and_burn_cd():
-    msg, yyyy_mm_dd = choose_cd()
+    msg, yyyy_mm_dd = choose_cd_day()
     if msg == "":
-        burn_cd_of_day(yyyy_mm_dd)
+        burn_cds_of_day(yyyy_mm_dd)
     elif msg != "ignore":
         InfoMsgBox(QMessageBox.Critical, "Error", msg)
 

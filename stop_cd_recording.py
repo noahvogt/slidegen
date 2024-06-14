@@ -27,28 +27,10 @@ from utils import (
     log,
     error_msg,
     expand_dir,
+    mark_end_of_recording,
 )
 from input import get_cachefile_content, validate_cd_record_config
 import config as const
-
-
-def mark_end_of_recording(cachefile_content: list) -> None:
-    cachefile = expand_dir(const.CD_RECORD_CACHEFILE)
-
-    log("marking end of recording...")
-    try:
-        with open(cachefile, mode="w+", encoding="utf-8-sig") as file_writer:
-            file_writer.write(cachefile_content[0].strip() + "\n")
-            file_writer.write("9001\n")
-            file_writer.write(cachefile_content[2].strip() + "\n")
-            file_writer.write(cachefile_content[3].strip() + "\n")
-            file_writer.write(cachefile_content[4].strip() + "\n")
-    except (FileNotFoundError, PermissionError, IOError) as error:
-        error_msg(
-            "Failed to write to cachefile '{}'. Reason: {}".format(
-                cachefile, error
-            )
-        )
 
 
 def stop_cd_recording() -> None:

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Copyright © 2024 Noah Vogt <noah@noahvogt.com>
 
@@ -17,7 +15,4 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from utils import burn_cd_of_day, get_yyyy_mm_dd_date
-
-if __name__ == "__main__":
-    burn_cd_of_day(get_yyyy_mm_dd_date())
+CD_RECORD_FILENAME_ZFILL = 7
