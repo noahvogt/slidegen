@@ -56,15 +56,9 @@ class RadioButtonDialog(QDialog):  # pylint: disable=too-few-public-methods
         super().__init__()
         self.setWindowTitle(window_title)
 
-        master_layout = QVBoxLayout(self)
+        self.master_layout = QVBoxLayout(self)
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        master_layout.addWidget(scroll_area)
-
-        scroll_content = QWidget()
-        scroll_area.setWidget(scroll_content)
-        scroll_area_layout = QVBoxLayout(scroll_content)
+        scroll_area_layout = self.get_scroll_area_layout()
 
         self.radio_button_group = QButtonGroup(self)
 
@@ -78,7 +72,17 @@ class RadioButtonDialog(QDialog):  # pylint: disable=too-few-public-methods
 
         ok_button = QPushButton("OK")
         ok_button.clicked.connect(self.accept)
-        master_layout.addWidget(ok_button)
+        self.master_layout.addWidget(ok_button)
+
+    def get_scroll_area_layout(self):
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        self.master_layout.addWidget(scroll_area)
+
+        scroll_content = QWidget()
+        scroll_area.setWidget(scroll_content)
+        scroll_area_layout = QVBoxLayout(scroll_content)
+        return scroll_area_layout
 
     def accept(self):
         selected_button = self.radio_button_group.checkedButton()
@@ -103,15 +107,9 @@ class SheetAndPreviewChooser(QDialog):  # pylint: disable=too-few-public-methods
         super().__init__()
         self.setWindowTitle(window_title)
 
-        master_layout = QVBoxLayout(self)
+        self.master_layout = QVBoxLayout(self)
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-        master_layout.addWidget(scroll_area)
-
-        scroll_content = QWidget()
-        scroll_area.setWidget(scroll_content)
-        scroll_area_layout = QVBoxLayout(scroll_content)
+        scroll_area_layout = self.get_scroll_area_layout()
 
         self.radio_button_group = QButtonGroup(self)
 
@@ -151,7 +149,17 @@ class SheetAndPreviewChooser(QDialog):  # pylint: disable=too-few-public-methods
 
         ok_button = QPushButton("OK")
         ok_button.clicked.connect(self.accept)
-        master_layout.addWidget(ok_button)
+        self.master_layout.addWidget(ok_button)
+
+    def get_scroll_area_layout(self):
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        self.master_layout.addWidget(scroll_area)
+
+        scroll_content = QWidget()
+        scroll_area.setWidget(scroll_content)
+        scroll_area_layout = QVBoxLayout(scroll_content)
+        return scroll_area_layout
 
     def get_player_button(self, icon_name: str) -> QPushButton:
         stop_button = QPushButton("")
