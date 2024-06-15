@@ -42,6 +42,7 @@ from input import (
     validate_cd_record_config,
     RadioButtonDialog,
     InfoMsgBox,
+    SheetAndPreviewChooser,
 )
 from os_agnostic import get_cd_drives, eject_drive
 import config as const
@@ -222,7 +223,7 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
         target_dir = path.join(
             expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd
         )
-        if not path.isfile(target_dir):
+        if not path.isdir(target_dir):
             exit_as_no_cds_found(target_dir)
 
         target_files = sorted(listdir(target_dir))
@@ -239,6 +240,12 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
         else:
             for num, file in enumerate(cue_sheets):
                 log(f"file found: {file}")
+            app = QApplication([])
+            dialog = SheetAndPreviewChooser(
+                target_dir, cue_sheets, "Preview CD's"
+            )
+            if dialog.exec_() == QDialog.Accepted:
+                log(f"Burning CD from sheet: {dialog.chosen}")
 
     except (FileNotFoundError, PermissionError, IOError):
         InfoMsgBox(

@@ -192,9 +192,8 @@ def update_cue_sheet(
         last_track_milis = int(cachefile_content[4])
         if unix_milis - last_track_milis < const.CD_RECORD_MIN_TRACK_MILIS:
             warn(
-                "Minimum track length of {}ms not satisfied".format(
-                    const.CD_RECORD_MIN_TRACK_MILIS
-                )
+                f"Minimum track length of {const.CD_RECORD_MIN_TRACK_MILIS}"
+                + "ms not satisfied, skipping..."
             )
             return
 
