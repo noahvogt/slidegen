@@ -229,23 +229,30 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
         target_files = sorted(listdir(target_dir))
         cue_sheets = []
         for file in target_files:
-            if file.endswith(".cue") and len(file) == 17:
+            if is_legal_sheet_filename(file):
                 cue_sheets.append(file)
 
         if not target_files:
             exit_as_no_cds_found(target_dir)
 
         if len(cue_sheets) == 1:
-            burn_and_eject_cd(yyyy_mm_dd, "0000001")
+            burn_and_eject_cd(
+                yyyy_mm_dd, "1".zfill(const.CD_RECORD_FILENAME_ZFILL)
+            )
         else:
-            for num, file in enumerate(cue_sheets):
-                log(f"file found: {file}")
             app = QApplication([])
             dialog = SheetAndPreviewChooser(
-                target_dir, cue_sheets, "Preview CD's"
+                target_dir, cue_sheets, f"Preview CD's for {yyyy_mm_dd}"
             )
             if dialog.exec_() == QDialog.Accepted:
-                log(f"Burning CD from sheet: {dialog.chosen_sheets}")
+                if not dialog.chosen_sheets:
+                    sys.exit(0)
+                log(f"Burning CD's from sheets: {dialog.chosen_sheets}")
+                for sheet in dialog.chosen_sheets:
+                    del app  # pyright: ignore
+                    burn_and_eject_cd(
+                        yyyy_mm_dd, get_padded_cd_num_from_sheet_filename(sheet)
+                    )
 
     except (FileNotFoundError, PermissionError, IOError):
         InfoMsgBox(
@@ -264,6 +271,22 @@ def exit_as_no_cds_found(target_dir):
         f"Error: Did not find any CD's in: {target_dir}.",
     )
     sys.exit(1)
+
+
+def is_legal_sheet_filename(filename: str) -> bool:
+    return bool(match(r"^sheet-[0-9]+\.cue", filename)) and len(filename) == 17
+
+
+def get_padded_cd_num_from_sheet_filename(filename: str) -> str:
+    if not is_legal_sheet_filename(filename):
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: filename '{filename}' in illegal format",
+        )
+        sys.exit(1)
+
+    return filename[6:13]
 
 
 def burn_and_eject_cd(yyyy_mm_dd: str, padded_cd_num: str) -> None:
