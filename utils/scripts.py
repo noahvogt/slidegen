@@ -74,8 +74,8 @@ def choose_right_cd_drive(drives: list) -> str:
 
         dialog = RadioButtonDialog(drives, "Choose a CD to Burn")
         if dialog.exec_() == QDialog.Accepted:
-            print(f"Dialog accepted: {dialog.chosen}")
-            return dialog.chosen
+            print(f"Dialog accepted: {dialog.chosen_sheets}")
+            return dialog.chosen_sheets
         log("Warning: Choosing first cd drive...", color="yellow")
 
     return drives[0]
@@ -245,7 +245,7 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
                 target_dir, cue_sheets, "Preview CD's"
             )
             if dialog.exec_() == QDialog.Accepted:
-                log(f"Burning CD from sheet: {dialog.chosen}")
+                log(f"Burning CD from sheet: {dialog.chosen_sheets}")
 
     except (FileNotFoundError, PermissionError, IOError):
         InfoMsgBox(

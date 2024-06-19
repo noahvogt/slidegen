@@ -53,6 +53,7 @@ def choose_cd_day() -> list[str]:
 
         dialog = RadioButtonDialog(dirs, "Choose a CD to Burn")
         if dialog.exec_() == QDialog.Accepted:
+            # TODO: update text for possibly mutliple CD's
             log(f"Burning CD for day: {dialog.chosen}")
             return ["", dialog.chosen]
         return ["ignore", ""]
