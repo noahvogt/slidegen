@@ -19,15 +19,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from os import kill
 from signal import SIGTERM
+from time import sleep
 
 from utils import (
     get_yyyy_mm_dd_date,
     make_sure_file_exists,
     is_valid_cd_record_checkfile,
-    log,
     error_msg,
-    expand_dir,
     mark_end_of_recording,
+    get_unix_milis,
+    warn,
 )
 from input import get_cachefile_content, validate_cd_record_config
 import config as const
@@ -38,6 +39,16 @@ def stop_cd_recording() -> None:
     yyyy_mm_dd = get_yyyy_mm_dd_date()
 
     if is_valid_cd_record_checkfile(cachefile_content, yyyy_mm_dd):
+        unix_milis = get_unix_milis()
+        last_track_milis = int(cachefile_content[4])
+        milis_diff = unix_milis - last_track_milis
+        if milis_diff < const.CD_RECORD_MIN_TRACK_MILIS:
+            warn(
+                f"Minimum track length of {const.CD_RECORD_MIN_TRACK_MILIS}"
+                + "ms not satisfied, sleeping until reached..."
+            )
+            sleep(milis_diff / 1000 + 1)
+
         try:
             kill(int(cachefile_content[2]), SIGTERM)
         except ProcessLookupError:

@@ -17,9 +17,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from os import path, mkdir
+from os import path, mkdir, listdir
 from shlex import split
 from subprocess import Popen
+from re import match
 
 from utils import (
     get_yyyy_mm_dd_date,
@@ -36,18 +37,32 @@ from input import get_cachefile_content, validate_cd_record_config
 import config as const
 
 
+def get_reset_marker(yyyy_mm_dd: str) -> int:
+    max_reset = 0
+    for file in listdir(path.join(const.CD_RECORD_OUTPUT_BASEDIR, yyyy_mm_dd)):
+        print(file)
+        if (
+            match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]+\.wav$", file)
+            and len(file) == 22
+        ):
+            print(f"file {file} reached")
+            max_reset = max(int(file[11:18]), max_reset)
+            print(max_reset)
+    return max_reset + 1
+
+
 def start_cd_recording() -> None:
     cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
-    date = get_yyyy_mm_dd_date()
-    cd_num = int(cachefile_content[5].strip())
+    yyyy_mm_dd = get_yyyy_mm_dd_date()
+    cd_num = get_reset_marker(yyyy_mm_dd)
 
-    ensure_output_dir_exists(date)
+    ensure_output_dir_exists(yyyy_mm_dd)
 
     while cachefile_content[1].strip() != "9001":
         filename = path.join(
             const.CD_RECORD_OUTPUT_BASEDIR,
-            date,
-            f"{date}-{cd_num:0{const.CD_RECORD_FILENAME_ZFILL}}.wav",
+            yyyy_mm_dd,
+            f"{yyyy_mm_dd}-{cd_num:0{const.CD_RECORD_FILENAME_ZFILL}}.wav",
         )
 
         unix_milis = get_unix_milis()
@@ -83,7 +98,7 @@ def start_cd_recording() -> None:
             const.CD_RECORD_CACHEFILE
         )
         update_cue_sheet(
-            fresh_cachefile_content, date, unix_milis, initial_run=True
+            fresh_cachefile_content, yyyy_mm_dd, unix_milis, initial_run=True
         )
 
         _ = process.communicate()[0]  # wait for subprocess to end
@@ -190,6 +205,22 @@ def update_cue_sheet(
 
         start_milis = int(cachefile_content[3])
         last_track_milis = int(cachefile_content[4])
+
+        diff_to_max_milis = const.CD_RECORD_MAX_SECONDS * 1000 - (
+            unix_milis - start_milis
+        )
+        if (
+            not initial_run
+            and diff_to_max_milis < const.CD_RECORD_MIN_TRACK_MILIS
+        ):
+            warn(
+                "Tried to set CD Marker too close to maximum time, "
+                + "moving backwards in time..."
+            )
+            unix_milis = (
+                unix_milis - const.CD_RECORD_MIN_TRACK_MILIS + diff_to_max_milis
+            )
+
         if unix_milis - last_track_milis < const.CD_RECORD_MIN_TRACK_MILIS:
             warn(
                 f"Minimum track length of {const.CD_RECORD_MIN_TRACK_MILIS}"
