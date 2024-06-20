@@ -22,11 +22,14 @@ from shlex import split
 from time import sleep
 from re import match
 from enum import Enum
+from dataclasses import dataclass
+import ftplib
 
 from pyautogui import keyDown, keyUp
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication,
     QMessageBox,
+    QInputDialog,
 )
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QDialog,
@@ -38,6 +41,8 @@ from utils import (
     error_msg,
     get_yyyy_mm_dd_date,
     expand_dir,
+    CustomException,
+    get_wave_duration_in_frames,
 )
 from input import (
     validate_cd_record_config,
@@ -351,3 +356,218 @@ def burn_and_eject_cd(
         InfoMsgBox(QMessageBox.Critical, "Error", "Error: Failed to burn CD.")
 
     eject_drive(drive)
+
+
+def make_sure_there_is_no_ongoing_cd_recording() -> None:
+    if path.isfile(const.CD_RECORD_CACHEFILE):
+        cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
+        if is_valid_cd_record_checkfile(
+            cachefile_content, get_yyyy_mm_dd_date()
+        ):
+            if cachefile_content[1].strip() != "9001":
+                InfoMsgBox(
+                    QMessageBox.Critical,
+                    "Error",
+                    "Error: Ongoing CD Recording detected",
+                )
+                sys.exit(1)
+
+
+def get_index_line_as_frames(line: str) -> int:
+    stripped_line = line.strip()
+    frames = 75 * 60 * int(stripped_line[9:11])
+    frames += 75 * int(stripped_line[12:14])
+    frames += int(stripped_line[15:17])
+    return frames
+
+
+@dataclass
+class SermonSegment:
+    start_frame: int
+    end_frame: int
+    source_cue_sheet: str
+    source_marker: int
+
+
+def get_segments_over_20_mins(
+    segments: list[SermonSegment],
+) -> list[SermonSegment]:
+    suitable_segments = []
+    for segment in segments:
+        if segment.end_frame - segment.start_frame >= 2250:  # 75 * 60 * 20
+            # if segment.end_frame - segment.start_frame >= 90000:  # 75 * 60 * 20
+            suitable_segments.append(segment)
+    return suitable_segments
+
+
+def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
+    try:
+        segments = []
+        base_frames = 0
+        max_frames = 0
+
+        day_dir = path.join(const.CD_RECORD_OUTPUT_BASEDIR, yyyy_mm_dd)
+        files = sorted(listdir(day_dir))
+        cue_sheets = []
+        for file in files:
+            if is_legal_sheet_filename(file):
+                cue_sheets.append(file)
+        for sheet_num, sheet in enumerate(cue_sheets):
+            with open(
+                path.join(day_dir, sheet),
+                mode="r",
+                encoding="utf-8-sig",
+            ) as sheet_reader:
+                sheet_content = sheet_reader.readlines()
+            start_frame = 0
+            end_frame = 0
+            wav_path = ""
+            max_line_num = 0
+            for line_num, line in enumerate(sheet_content):
+                max_line_num = line_num
+                if line_num == 0:
+                    if not match(r"^FILE \".+\" WAVE$", line):
+                        raise CustomException("invalid first cue sheet line")
+                    wav_path = line[line.find('"') + 1 :]
+                    wav_path = wav_path[: wav_path.rfind('"')]
+                elif match(r"^\s+INDEX 01 ([0-9]{2}:){2}[0-9]{2}\s*$", line):
+                    if line_num != 2:
+                        end_frame = get_index_line_as_frames(line)
+                        segments.append(
+                            SermonSegment(
+                                start_frame,
+                                end_frame,
+                                sheet,
+                                (max_line_num - 2) // 2,
+                            )
+                        )
+                        start_frame = end_frame
+
+            segments.append(
+                SermonSegment(
+                    start_frame,
+                    get_wave_duration_in_frames(wav_path),
+                    sheet,
+                    max_line_num // 2,
+                )
+            )
+            # for segment in file_segments:
+            #     log(f"start {segment.start_frame}")
+            #     log(f"end {segment.end_frame}")
+            #     log(f"sheet {segment.source_cue_sheet}")
+            #     log(f"marker {segment.source_marker}")
+
+        return segments
+    except (
+        FileNotFoundError,
+        PermissionError,
+        IOError,
+        CustomException,
+    ) as error:
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: Could not parse sermon segments. Reason: {error}",
+        )
+        sys.exit(1)
+
+
+def upload_sermon_segment(segment: SermonSegment) -> None:
+    try:
+        session = ftplib.FTP_TLS(
+            const.SERMON_UPLOAD_FTP_HOSTNAME,
+            const.SERMON_UPLOAD_FTP_USER,
+            const.SERMON_UPLOAD_FTP_PASSWORD,
+        )
+        session.cwd(const.SERMON_UPLOAD_FTP_UPLOAD_DIR)
+        raw_filenames = session.nlst()
+        disallowed_filenames = []
+        for filename in raw_filenames:
+            if filename != "." and filename != "..":
+                disallowed_filenames.append(filename)
+
+        print(disallowed_filenames)
+        # file = open("upl.mp3", "rb")
+        # session.storbinary("STOR upl.mp3", file)
+        # file.close()
+        session.quit()
+        InfoMsgBox(
+            QMessageBox.Information, "Success", "Sermon uploaded successfully."
+        )
+    except ftplib.all_errors as error:
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: Could not connect to ftp server. Reason: {error}",
+        )
+        sys.exit(1)
+
+
+@dataclass
+class ArchiveTypeStrings:
+    archive_type_plural: str
+    action_to_choose: str
+    action_ing_form: str
+
+
+def choose_cd_day() -> list[str]:
+    strings = ArchiveTypeStrings("CD's", "CD day to Burn", "Burning CD for day")
+    return choose_archive_day(strings)
+
+
+def choose_sermon_day() -> list[str]:
+    strings = ArchiveTypeStrings(
+        "Sermons", "Sermon day to upload", "Uploading Sermon for day"
+    )
+    return choose_archive_day(strings)
+
+
+def choose_archive_day(strings: ArchiveTypeStrings) -> list[str]:
+    # pylint: disable=unused-variable
+    app = QApplication([])
+    try:
+        dirs = sorted(listdir(const.CD_RECORD_OUTPUT_BASEDIR))
+        dirs.reverse()
+
+        if not dirs:
+            return [
+                f"Did not find any {strings.archive_type_plural} in: "
+                + f"{const.CD_RECORD_OUTPUT_BASEDIR}.",
+                "",
+            ]
+
+        dialog = RadioButtonDialog(
+            dirs, "Choose a " + f"{strings.action_to_choose}"
+        )
+        if dialog.exec_() == QDialog.Accepted:
+            log(f"{strings.action_ing_form} for day: {dialog.chosen}")
+            return ["", dialog.chosen]
+        return ["ignore", ""]
+    except (FileNotFoundError, PermissionError, IOError):
+        pass
+
+    return [
+        f"Failed to access directory: {const.CD_RECORD_OUTPUT_BASEDIR}.",
+        "",
+    ]
+
+
+def upload_sermon_for_day(yyyy_mm_dd: str):
+    segments = get_possible_sermon_segments_of_day(yyyy_mm_dd)
+    suitable_segments = get_segments_over_20_mins(segments)
+    for segment in suitable_segments:
+        print(f"start {segment.start_frame}")
+        print(f"end {segment.end_frame}")
+        print(f"sheet {segment.source_cue_sheet}")
+        print(f"marker {segment.source_marker}")
+
+    if not segments:
+        # TODO: choose
+        InfoMsgBox(
+            QMessageBox.Critical, "Error", "Error: no suitable segment found"
+        )
+    elif len(segments):
+        upload_sermon_segment(segments[0])
+    else:
+        # TODO: choose
+        pass

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """
 Copyright © 2024 Noah Vogt <noah@noahvogt.com>
 
@@ -17,28 +15,26 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import sys
+
+from soundfile import SoundFile, LibsndfileError  # pyright: ignore
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
 
-from utils import (
-    burn_cds_of_day,
-    choose_cd_day,
-)
-from input import (
-    validate_cd_record_config,
-    InfoMsgBox,
-)
+
+def get_wave_duration_in_frames(file_name: str) -> int:
+    try:
+        wav = SoundFile(file_name)
+        return int(wav.frames / wav.samplerate * 75)
+    except LibsndfileError:
+        QMessageBox.critical(
+            None,
+            "Error",
+            f"Error: Could not get duration of {file_name}",
+        )
+        sys.exit(1)
 
 
-def choose_and_burn_cd():
-    msg, yyyy_mm_dd = choose_cd_day()
-    if msg == "":
-        burn_cds_of_day(yyyy_mm_dd)
-    elif msg != "ignore":
-        InfoMsgBox(QMessageBox.Critical, "Error", msg)
-
-
-if __name__ == "__main__":
-    validate_cd_record_config()
-    choose_and_burn_cd()
+def get_wave_duration_in_secs(file_name: str) -> int:
+    return int(get_wave_duration_in_frames(file_name) / 75)

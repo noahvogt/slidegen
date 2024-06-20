@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+
 """
-Copyright © 2022 Noah Vogt <noah@noahvogt.com>
+Copyright © 2024 Noah Vogt <noah@noahvogt.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,23 +17,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
-
-from termcolor import colored
-
-
-def error_msg(msg: str):
-    print(colored("[*] Error: {}".format(msg), "red"))
-    sys.exit(1)
-
-
-def warn(message: str) -> None:
-    print(colored("[*] Warning: {}".format(message), "yellow"))
+from utils import (
+    make_sure_there_is_no_ongoing_cd_recording,
+    get_yyyy_mm_dd_date,
+    upload_sermon_for_day,
+)
+from input import (
+    validate_sermon_upload_config,
+)
 
 
-def log(message: str, color="green") -> None:
-    print(colored("[*] {}".format(message), color))  # pyright: ignore
-
-
-class CustomException(Exception):
-    pass
+if __name__ == "__main__":
+    validate_sermon_upload_config()
+    make_sure_there_is_no_ongoing_cd_recording()
+    upload_sermon_for_day(get_yyyy_mm_dd_date())

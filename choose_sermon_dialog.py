@@ -1,5 +1,7 @@
+#!/usr/bin/env python3
+
 """
-Copyright © 2022 Noah Vogt <noah@noahvogt.com>
+Copyright © 2024 Noah Vogt <noah@noahvogt.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,23 +17,28 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QMessageBox,
+)
 
-from termcolor import colored
-
-
-def error_msg(msg: str):
-    print(colored("[*] Error: {}".format(msg), "red"))
-    sys.exit(1)
-
-
-def warn(message: str) -> None:
-    print(colored("[*] Warning: {}".format(message), "yellow"))
-
-
-def log(message: str, color="green") -> None:
-    print(colored("[*] {}".format(message), color))  # pyright: ignore
+from utils import (
+    upload_sermon_for_day,
+    choose_sermon_day,
+)
+from input import (
+    validate_sermon_upload_config,
+    InfoMsgBox,
+)
 
 
-class CustomException(Exception):
-    pass
+def choose_and_upload_sermon():
+    msg, yyyy_mm_dd = choose_sermon_day()
+    if msg == "":
+        upload_sermon_for_day(yyyy_mm_dd)
+    elif msg != "ignore":
+        InfoMsgBox(QMessageBox.Critical, "Error", msg)
+
+
+if __name__ == "__main__":
+    validate_sermon_upload_config()
+    choose_and_upload_sermon()

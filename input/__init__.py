@@ -30,6 +30,7 @@ from .validate_config import (
     validate_ssync_config,
     validate_obs_song_scene_switcher_config,
     validate_cd_record_config,
+    validate_sermon_upload_config,
 )
 from .slide_selection_iterator import slide_selection_iterator
 from .gui import RadioButtonDialog, InfoMsgBox, SheetAndPreviewChooser

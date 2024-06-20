@@ -15,7 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .log import error_msg, warn, log
+from .audio import get_wave_duration_in_secs, get_wave_duration_in_frames
+from .log import error_msg, warn, log, CustomException
 from .strings import (
     get_songtext_by_structure,
     structure_as_list,
@@ -34,4 +35,11 @@ from .scripts import (
     mark_end_of_recording,
     cycle_to_song_direction,
     SongDirection,
+    make_sure_there_is_no_ongoing_cd_recording,
+    get_possible_sermon_segments_of_day,
+    get_segments_over_20_mins,
+    upload_sermon_segment,
+    choose_cd_day,
+    choose_sermon_day,
+    upload_sermon_for_day,
 )

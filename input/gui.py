@@ -16,11 +16,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-from os import listdir, path
+from os import path
 from re import match
 from dataclasses import dataclass
-
-from soundfile import SoundFile, LibsndfileError  # pyright: ignore
 
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication,
@@ -47,9 +45,7 @@ from PyQt5.QtCore import (  # pylint: disable=no-name-in-module
     QTimer,
 )
 
-
-class CustomException(Exception):
-    pass
+from utils import CustomException, get_wave_duration_in_secs
 
 
 @dataclass
@@ -130,19 +126,6 @@ class RadioButtonDialog(QDialog):  # pylint: disable=too-few-public-methods
                 "No Selection",
                 "Please select an option before proceeding.",
             )
-
-
-def get_wave_duration_in_secs(file_name: str) -> int:
-    try:
-        wav = SoundFile(file_name)
-        return int(wav.frames / wav.samplerate)
-    except LibsndfileError:
-        QMessageBox.critical(
-            None,
-            "Error",
-            f"Error: Could not get duration of {file_name}",
-        )
-        sys.exit(1)
 
 
 class SheetAndPreviewChooser(QDialog):  # pylint: disable=too-few-public-methods

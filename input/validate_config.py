@@ -56,6 +56,18 @@ def validate_cd_record_config() -> None:
     general_config_validator(needed_constants)
 
 
+def validate_sermon_upload_config() -> None:
+    needed_constants: dict = {
+        "CD_RECORD_CACHEFILE": const.CD_RECORD_CACHEFILE,
+        "CD_RECORD_OUTPUT_BASEDIR": const.CD_RECORD_OUTPUT_BASEDIR,
+        "SERMON_UPLOAD_FTP_HOSTNAME": const.SERMON_UPLOAD_FTP_HOSTNAME,
+        "SERMON_UPLOAD_FTP_USER": const.SERMON_UPLOAD_FTP_USER,
+        "SERMON_UPLOAD_FTP_PASSWORD": const.SERMON_UPLOAD_FTP_PASSWORD,
+        "SERMON_UPLOAD_FTP_UPLOAD_DIR": const.SERMON_UPLOAD_FTP_UPLOAD_DIR,
+    }
+    general_config_validator(needed_constants)
+
+
 def general_config_validator(needed_constants: dict) -> None:
     for key in needed_constants:
         if needed_constants.get(key) == "":
