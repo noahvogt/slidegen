@@ -17,37 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from re import match
-
 from utils import (
-    get_yyyy_mm_dd_date,
-    switch_to_song,
+    SongDirection,
+    cycle_to_song_direction,
     make_sure_file_exists,
 )
-from input import get_cachefile_content, validate_songchooser_config
+from input import validate_obs_song_scene_switcher_config
 import config as const
 
-
-def cycle_to_next_song() -> None:
-    cachefile_content = get_cachefile_content(const.NEXTSONG_CACHE_FILE)
-    if (
-        not (
-            len(cachefile_content) == 2
-            and match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}$", cachefile_content[0])
-            and match(r"^[0-9]+$", cachefile_content[1])
-        )
-        or cachefile_content[0].strip() != get_yyyy_mm_dd_date()
-    ):
-        switch_to_song(1)
-    else:
-        switch_to_song(int(cachefile_content[1]) + 1)
-
-
-def main() -> None:
-    validate_songchooser_config()
-    make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
-    cycle_to_next_song()
-
-
 if __name__ == "__main__":
-    main()
+    validate_obs_song_scene_switcher_config()
+    make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
+    cycle_to_song_direction(SongDirection.NEXT)

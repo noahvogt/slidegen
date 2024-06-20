@@ -32,4 +32,6 @@ from .scripts import (
     is_valid_cd_record_checkfile,
     burn_cds_of_day,
     mark_end_of_recording,
+    cycle_to_song_direction,
+    SongDirection,
 )

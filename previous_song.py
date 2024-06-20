@@ -17,35 +17,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from sys import argv
-
 from utils import (
-    error_msg,
+    SongDirection,
+    cycle_to_song_direction,
     make_sure_file_exists,
-    switch_to_song,
 )
 from input import validate_obs_song_scene_switcher_config
 import config as const
 
-
-# pylint: disable=inconsistent-return-statements
-def get_force_int() -> int:
-    try:
-        return int(argv[1])
-    except IndexError:
-        error_msg("couldn't parse force song integer")
-
-
-def exit_if_force_int_is_illegal():
-    force_int = get_force_int()
-    if force_int > const.OBS_MIN_SUBDIRS:
-        error_msg("force integer too big")
-    if force_int < 1:
-        error_msg("force integer cannot be smaller than 1")
-
-
 if __name__ == "__main__":
     validate_obs_song_scene_switcher_config()
     make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
-    exit_if_force_int_is_illegal()
-    switch_to_song(get_force_int())
+    cycle_to_song_direction(SongDirection.PREVIOUS)

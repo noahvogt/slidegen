@@ -21,6 +21,7 @@ from subprocess import Popen
 from shlex import split
 from time import sleep
 from re import match
+from enum import Enum
 
 from pyautogui import keyDown, keyUp
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
@@ -43,6 +44,7 @@ from input import (
     RadioButtonDialog,
     InfoMsgBox,
     SheetAndPreviewChooser,
+    get_cachefile_content,
 )
 from os_agnostic import get_cd_drives, eject_drive
 import config as const
@@ -93,9 +95,35 @@ def get_burn_cmd(cd_drive: str, yyyy_mm_dd, padded_zfill_num: str) -> str:
     )
 
 
+class SongDirection(Enum):
+    PREVIOUS = "previous"
+    NEXT = "next"
+
+
+def cycle_to_song_direction(song_direction: SongDirection):
+    cachefile_content = get_cachefile_content(const.NEXTSONG_CACHE_FILE)
+    if song_direction == SongDirection.PREVIOUS:
+        step = -1
+    else:
+        step = 1
+    if (
+        not (
+            len(cachefile_content) == 2
+            and match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}$", cachefile_content[0])
+            and match(r"^[0-9]+$", cachefile_content[1])
+        )
+        or cachefile_content[0].strip() != get_yyyy_mm_dd_date()
+    ):
+        switch_to_song(1)
+    else:
+        switch_to_song(int(cachefile_content[1]) + step)
+
+
 def switch_to_song(song_number: int) -> None:
     if song_number > const.OBS_MIN_SUBDIRS:
         song_number = 1
+    if song_number < 1:
+        song_number = const.OBS_MIN_SUBDIRS
     log("sending hotkey to switch to scene {}".format(song_number), "cyan")
     scene_switch_hotkey = list(const.OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX)
     scene_switch_hotkey.append("f{}".format(song_number))
@@ -248,10 +276,14 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
                 if not dialog.chosen_sheets:
                     sys.exit(0)
                 log(f"Burning CD's from sheets: {dialog.chosen_sheets}")
-                for sheet in dialog.chosen_sheets:
+                num_of_chosen_sheets = len(dialog.chosen_sheets)
+                for num, sheet in enumerate(dialog.chosen_sheets):
                     del app  # pyright: ignore
+                    last_cd_to_burn = num == num_of_chosen_sheets
                     burn_and_eject_cd(
-                        yyyy_mm_dd, get_padded_cd_num_from_sheet_filename(sheet)
+                        yyyy_mm_dd,
+                        get_padded_cd_num_from_sheet_filename(sheet),
+                        last_cd_to_burn,
                     )
 
     except (FileNotFoundError, PermissionError, IOError):
@@ -289,7 +321,9 @@ def get_padded_cd_num_from_sheet_filename(filename: str) -> str:
     return filename[6:13]
 
 
-def burn_and_eject_cd(yyyy_mm_dd: str, padded_cd_num: str) -> None:
+def burn_and_eject_cd(
+    yyyy_mm_dd: str, padded_cd_num: str, expect_next_cd=False
+) -> None:
     cd_drives = get_cd_drives()
     if not cd_drives:
         InfoMsgBox(
@@ -303,8 +337,16 @@ def burn_and_eject_cd(yyyy_mm_dd: str, padded_cd_num: str) -> None:
     burn_success = CDBurnerGUI(
         drive, yyyy_mm_dd, padded_cd_num
     ).burning_successful()
+    if expect_next_cd:
+        extra_success_msg = "Please put the next CD into the drive slot before clicking the button."
+    else:
+        extra_success_msg = ""
     if burn_success:
-        InfoMsgBox(QMessageBox.Info, "Info", "Successfully burned CD.")
+        InfoMsgBox(
+            QMessageBox.Info,
+            "Info",
+            "Successfully burned CD." + extra_success_msg,
+        )
     else:
         InfoMsgBox(QMessageBox.Critical, "Error", "Error: Failed to burn CD.")
 

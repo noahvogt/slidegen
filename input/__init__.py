@@ -28,7 +28,7 @@ from .parse_argv import (
 )
 from .validate_config import (
     validate_ssync_config,
-    validate_songchooser_config,
+    validate_obs_song_scene_switcher_config,
     validate_cd_record_config,
 )
 from .slide_selection_iterator import slide_selection_iterator

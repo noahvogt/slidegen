@@ -35,7 +35,7 @@ def validate_ssync_config() -> None:
     general_config_validator(needed_constants)
 
 
-def validate_songchooser_config() -> None:
+def validate_obs_song_scene_switcher_config() -> None:
     needed_constants: dict = {
         "NEXTSONG_CACHE_FILE": const.NEXTSONG_CACHE_FILE,
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,

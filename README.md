@@ -352,6 +352,9 @@ To transition to the new song, it sends another hotkey defined by the following 
 OBS_TRANSITION_HOTKEY = ["ctrl", "shift", "f12"]
 ```
 
+### previous_song.py
+
+Same as `next_song.py`, but in the other direction. Meaning it will switch to the OBS scene for the previous song.
 
 ### force_song.py
 
@@ -365,7 +368,7 @@ to switch to the scene with song 4.
 
 These are some issues and possible changes that will be addressed or at least considered by our future development efforts:
 
-- add more documentation, especially explaining the slide generation, but also the `PROMPT_INPUT`
+- add more documentation, especially explaining the slide generation, but also the `PROMPT_INPUT` and the cd burning scripts
 - add tests
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
 - add warnings that indicate potential problems with rclone syncing
