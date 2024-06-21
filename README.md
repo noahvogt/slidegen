@@ -312,12 +312,14 @@ The slides are placed in subdirectories of `OBS_SLIDES_DIR` with the following n
 First, install a reasonably new version of
 
 - [git](https://git-scm.com/)
+- [ffmpeg](https://ffmpeg.org/)
 - [fzf](https://github.com/junegunn/fzf)
 - [imagemagick](https://imagemagick.org/script/download.php) (If you are a windows user, select the c/c++ developer headers. Also you may need vcredist for imagemagick to work.)
 - [python3](https://www.python.org/)
-- some python packages that are not in the standard library using:
+- some python packages that are not in the standard library based on wether you use a unix-like system or Windows. Note that you only need to execute the one for you platform:
 
-    pip install -r requirements.txt
+    pip install -r requirements-unix.txt
+    pip install -r requirements-win32.txt
 
 Then clone the git repository somewhere, doesn't really matter. I often use
 

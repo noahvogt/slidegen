@@ -1,0 +1,7 @@
+wand
+termcolor
+colorama
+pyautogui
+PyQt5
+wmi
+soundfile
