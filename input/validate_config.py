@@ -64,6 +64,7 @@ def validate_sermon_upload_config() -> None:
         "SERMON_UPLOAD_FTP_USER": const.SERMON_UPLOAD_FTP_USER,
         "SERMON_UPLOAD_FTP_PASSWORD": const.SERMON_UPLOAD_FTP_PASSWORD,
         "SERMON_UPLOAD_FTP_UPLOAD_DIR": const.SERMON_UPLOAD_FTP_UPLOAD_DIR,
+        "SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES": const.SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES,
     }
     general_config_validator(needed_constants)
 

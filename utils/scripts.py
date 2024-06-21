@@ -24,6 +24,7 @@ from re import match
 from enum import Enum
 from dataclasses import dataclass
 import ftplib
+from shutil import copy2
 
 from pyautogui import keyDown, keyUp
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
@@ -389,12 +390,15 @@ class SermonSegment:
     source_marker: int
 
 
-def get_segments_over_20_mins(
+def get_segments_with_suitable_time(
     segments: list[SermonSegment],
 ) -> list[SermonSegment]:
     suitable_segments = []
     for segment in segments:
-        if segment.end_frame - segment.start_frame >= 2250:  # 75 * 60 * 20
+        if (
+            segment.end_frame - segment.start_frame
+            >= const.SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES
+        ):
             # if segment.end_frame - segment.start_frame >= 90000:  # 75 * 60 * 20
             suitable_segments.append(segment)
     return suitable_segments
@@ -437,7 +441,7 @@ def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
                             SermonSegment(
                                 start_frame,
                                 end_frame,
-                                sheet,
+                                path.join(day_dir, sheet),
                                 (max_line_num - 2) // 2,
                             )
                         )
@@ -447,7 +451,7 @@ def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
                 SermonSegment(
                     start_frame,
                     get_wave_duration_in_frames(wav_path),
-                    sheet,
+                    path.join(day_dir, sheet),
                     max_line_num // 2,
                 )
             )
@@ -472,6 +476,57 @@ def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
         sys.exit(1)
 
 
+def make_sermon_segment_mp3(segment: SermonSegment) -> str:
+    try:
+        with open(
+            segment.source_cue_sheet,
+            mode="r",
+            encoding="utf-8-sig",
+        ) as cue_sheet_reader:
+            cue_sheet_content = cue_sheet_reader.readlines()
+        first_line = cue_sheet_content[0].strip()
+        if not match(r"^FILE \".+\" WAVE$", first_line):
+            raise CustomException("invalid first cue sheet line")
+        full_wav_path = first_line[first_line.find('"') + 1 :]
+        full_wav_path = full_wav_path[: full_wav_path.rfind('"')]
+    except (
+        FileNotFoundError,
+        PermissionError,
+        IOError,
+        CustomException,
+    ) as error:
+        app = QApplication([])
+        QMessageBox.critical(
+            None,
+            "Error",
+            f"Could not parse cue sheet: '{segment.source_cue_sheet}',"
+            + f"Reason: {error}",
+        )
+        del app
+        sys.exit(1)
+
+    splitted_sheet_path = path.split(segment.source_cue_sheet)
+    mp3_path = path.join(
+        splitted_sheet_path[0],
+        splitted_sheet_path[1][6:13] + f"-segment-{segment.source_marker}.mp3",
+    )
+    cmd = "ffmpeg -y -i {} -acodec libmp3lame {}".format(
+        full_wav_path,
+        mp3_path,
+    )
+    process = Popen(split(cmd))
+    _ = process.communicate()[0]  # wait for subprocess to end
+    if process.returncode not in [255, 0]:
+        app = QApplication([])
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            "ffmpeg terminated with " + f"exit code {process.returncode}",
+        )
+
+    return mp3_path
+
+
 def upload_sermon_segment(segment: SermonSegment) -> None:
     try:
         session = ftplib.FTP_TLS(
@@ -483,18 +538,45 @@ def upload_sermon_segment(segment: SermonSegment) -> None:
         raw_filenames = session.nlst()
         disallowed_filenames = []
         for filename in raw_filenames:
-            if filename != "." and filename != "..":
+            if filename not in (".", ".."):
                 disallowed_filenames.append(filename)
 
-        print(disallowed_filenames)
-        # file = open("upl.mp3", "rb")
-        # session.storbinary("STOR upl.mp3", file)
-        # file.close()
+        app = QApplication([])
+        wanted_filename, accepted_dialog = QInputDialog.getText(
+            None,
+            "Input Dialog",
+            "Enter the filename for the Sermon (the .mp3 can be omitted):",
+        )
+        del app
+        if not wanted_filename.endswith(".mp3"):
+            wanted_filename = wanted_filename + ".mp3"
+
+        if not accepted_dialog or wanted_filename == ".mp3":
+            session.quit()
+            sys.exit(0)
+        if wanted_filename in disallowed_filenames:
+            InfoMsgBox(
+                QMessageBox.Critical, "Error", "Error: filename already exists."
+            )
+            session.quit()
+            sys.exit(1)
+
+        orig_mp3 = make_sermon_segment_mp3(segment)
+        mp3_final_path = path.join(path.split(orig_mp3)[0], wanted_filename)
+        copy2(orig_mp3, mp3_final_path)
+
+        with open(mp3_final_path, "rb") as file:
+            session.storbinary(f"STOR {path.split(mp3_final_path)[1]}", file)
         session.quit()
         InfoMsgBox(
             QMessageBox.Information, "Success", "Sermon uploaded successfully."
         )
-    except ftplib.all_errors as error:
+    except (
+        *ftplib.all_errors,
+        FileNotFoundError,
+        PermissionError,
+        IOError,
+    ) as error:
         InfoMsgBox(
             QMessageBox.Critical,
             "Error",
@@ -554,20 +636,20 @@ def choose_archive_day(strings: ArchiveTypeStrings) -> list[str]:
 
 def upload_sermon_for_day(yyyy_mm_dd: str):
     segments = get_possible_sermon_segments_of_day(yyyy_mm_dd)
-    suitable_segments = get_segments_over_20_mins(segments)
+    suitable_segments = get_segments_with_suitable_time(segments)
     for segment in suitable_segments:
         print(f"start {segment.start_frame}")
         print(f"end {segment.end_frame}")
         print(f"sheet {segment.source_cue_sheet}")
         print(f"marker {segment.source_marker}")
 
-    if not segments:
+    if not suitable_segments:
         # TODO: choose
         InfoMsgBox(
             QMessageBox.Critical, "Error", "Error: no suitable segment found"
         )
-    elif len(segments):
-        upload_sermon_segment(segments[0])
+    elif len(suitable_segments) == 1:
+        upload_sermon_segment(suitable_segments[0])
     else:
         # TODO: choose
         pass

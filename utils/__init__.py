@@ -37,7 +37,7 @@ from .scripts import (
     SongDirection,
     make_sure_there_is_no_ongoing_cd_recording,
     get_possible_sermon_segments_of_day,
-    get_segments_over_20_mins,
+    get_segments_with_suitable_time,
     upload_sermon_segment,
     choose_cd_day,
     choose_sermon_day,
