@@ -377,6 +377,9 @@ These are some issues and possible changes that will be addressed or at least co
 - use obs websocket connection, cleaner that transition hotkeys
 - add (semantic) versioning, maybe even display on program run as text
 - add not-yet-public streaming workflow scripts
+- make sermon uploads for more than one suitable segment possible
+- make combined sermon segments possible
+- split up `util/scripts.py` in more source files
 
 ## Licensing
 

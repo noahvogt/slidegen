@@ -1,19 +1,17 @@
-"""
-Copyright © 2022 Noah Vogt <noah@noahvogt.com>
+# Copyright © 2024 Noah Vogt <noah@noahvogt.com>
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import shutil
@@ -36,8 +34,12 @@ def clear_obs_slides_dir() -> None:
                 elif os.path.isdir(file_path):
                     shutil.rmtree(file_path)
             except (FileNotFoundError, PermissionError, IOError) as error:
-                error_msg("Failed to delete %s. Reason: %s" % (file_path, error))
+                error_msg(
+                    "Failed to delete %s. Reason: %s" % (file_path, error)
+                )
     except (FileNotFoundError, PermissionError, IOError) as error:
-        error_msg("could not list directory '{}'. Reason: {}".format(
-            expanded_dir, error
-                    ))
+        error_msg(
+            "could not list directory '{}'. Reason: {}".format(
+                expanded_dir, error
+            )
+        )
