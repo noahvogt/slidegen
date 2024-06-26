@@ -40,4 +40,5 @@ from .scripts import (
     choose_cd_day,
     choose_sermon_day,
     upload_sermon_for_day,
+    SermonSegment,
 )

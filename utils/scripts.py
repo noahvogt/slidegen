@@ -300,6 +300,36 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
         sys.exit(1)
 
 
+def get_ffmpeg_timestamp_from_frame(frames: int) -> str:
+    milis = int(frames / 75 * 1000)
+    return f"{milis}ms"
+
+
+def prepare_audio_files_for_segment_chooser(
+    segments: list[SermonSegment],
+) -> None:
+    for segment in segments:
+        # TODO: check if file duration and type roughly match the target to
+        # avoid useless regenerating. Also, parallelization.
+        cmd = (
+            f"ffmpeg -y -i {get_full_wav_path(segment)} -ss "
+            + f" {get_ffmpeg_timestamp_from_frame(segment.start_frame)} "
+            + f"-to {get_ffmpeg_timestamp_from_frame(segment.end_frame)} "
+            + f"-acodec copy {get_audio_base_path_from_segment(segment)}.wav"
+        )
+        process = Popen(split(cmd))
+        _ = process.communicate()[0]  # wait for subprocess to end
+        if process.returncode not in [255, 0]:
+            app = QApplication([])
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
+                "ffmpeg terminated with " + f"exit code {process.returncode}",
+            )
+            del app
+            sys.exit(1)
+
+
 def exit_as_no_cds_found(target_dir):
     InfoMsgBox(
         QMessageBox.Critical,
@@ -474,7 +504,7 @@ def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
         sys.exit(1)
 
 
-def make_sermon_segment_mp3(segment: SermonSegment) -> str:
+def get_full_wav_path(segment: SermonSegment) -> str:
     try:
         with open(
             segment.source_cue_sheet,
@@ -486,7 +516,7 @@ def make_sermon_segment_mp3(segment: SermonSegment) -> str:
         if not match(r"^FILE \".+\" WAVE$", first_line):
             raise CustomException("invalid first cue sheet line")
         full_wav_path = first_line[first_line.find('"') + 1 :]
-        full_wav_path = full_wav_path[: full_wav_path.rfind('"')]
+        return full_wav_path[: full_wav_path.rfind('"')]
     except (
         FileNotFoundError,
         PermissionError,
@@ -503,11 +533,11 @@ def make_sermon_segment_mp3(segment: SermonSegment) -> str:
         del app
         sys.exit(1)
 
-    splitted_sheet_path = path.split(segment.source_cue_sheet)
-    mp3_path = path.join(
-        splitted_sheet_path[0],
-        splitted_sheet_path[1][6:13] + f"-segment-{segment.source_marker}.mp3",
-    )
+
+def make_sermon_segment_mp3(segment: SermonSegment) -> str:
+    full_wav_path = get_full_wav_path(segment)
+
+    mp3_path = f"{get_audio_base_path_from_segment(segment)}.mp3"
     cmd = "ffmpeg -y -i {} -acodec libmp3lame {}".format(
         full_wav_path,
         mp3_path,
@@ -521,7 +551,17 @@ def make_sermon_segment_mp3(segment: SermonSegment) -> str:
             "Error",
             "ffmpeg terminated with " + f"exit code {process.returncode}",
         )
+        del app
 
+    return mp3_path
+
+
+def get_audio_base_path_from_segment(segment: SermonSegment) -> str:
+    splitted_sheet_path = path.split(segment.source_cue_sheet)
+    mp3_path = path.join(
+        splitted_sheet_path[0],
+        splitted_sheet_path[1][6:13] + f"-segment-{segment.source_marker}",
+    )
     return mp3_path
 
 
@@ -634,6 +674,13 @@ def choose_archive_day(strings: ArchiveTypeStrings) -> list[str]:
 
 def upload_sermon_for_day(yyyy_mm_dd: str):
     segments = get_possible_sermon_segments_of_day(yyyy_mm_dd)
+    if not segments:
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: No segment for day '{yyyy_mm_dd}' found",
+        )
+
     suitable_segments = get_segments_with_suitable_time(segments)
     for segment in suitable_segments:
         print(f"start {segment.start_frame}")
