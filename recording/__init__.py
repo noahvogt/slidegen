@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright © 2024 Noah Vogt <noah@noahvogt.com>
 
 # This program is free software: you can redistribute it and/or modify
@@ -15,19 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from utils import (
-    get_yyyy_mm_dd_date,
-)
-from recording import (
-    make_sure_there_is_no_ongoing_cd_recording,
+from .sermon import (
+    SermonSegment,
+    make_sermon_segment_mp3,
+    prepare_audio_files_for_segment_chooser,
     upload_sermon_for_day,
 )
-from input import (
-    validate_sermon_upload_config,
+from .verify import (
+    is_valid_cd_record_checkfile,
+    make_sure_there_is_no_ongoing_cd_recording,
 )
-
-
-if __name__ == "__main__":
-    validate_sermon_upload_config()
-    make_sure_there_is_no_ongoing_cd_recording()
-    upload_sermon_for_day(get_yyyy_mm_dd_date())
+from .cd import mark_end_of_recording, burn_cds_of_day

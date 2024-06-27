@@ -31,4 +31,10 @@ from .validate_config import (
     validate_sermon_upload_config,
 )
 from .slide_selection_iterator import slide_selection_iterator
-from .gui import RadioButtonDialog, InfoMsgBox, SheetAndPreviewChooser
+from .gui import (
+    RadioButtonDialog,
+    InfoMsgBox,
+    SheetAndPreviewChooser,
+    choose_cd_day,
+    choose_sermon_day,
+)

@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from os import path
+from os import path, listdir
 from re import match
 from dataclasses import dataclass
 
@@ -43,7 +43,9 @@ from PyQt5.QtCore import (  # pylint: disable=no-name-in-module
     QTimer,
 )
 
-from utils import CustomException, get_wave_duration_in_secs, SermonSegment
+from audio import SermonSegment
+from utils import CustomException, get_wave_duration_in_secs, log
+import config as const
 
 
 @dataclass
@@ -518,3 +520,50 @@ class SegmentChooser(QDialog):  # pylint: disable=too-few-public-methods
                 f"Could not parse cue sheet: '{full_path}', Reason: {error}",
             )
             sys.exit(1)
+
+@dataclass
+class ArchiveTypeStrings:
+    archive_type_plural: str
+    action_to_choose: str
+    action_ing_form: str
+
+def choose_cd_day() -> list[str]:
+    strings = ArchiveTypeStrings("CD's", "CD day to Burn", "Burning CD for day")
+    return choose_archive_day(strings)
+
+
+def choose_sermon_day() -> list[str]:
+    strings = ArchiveTypeStrings(
+        "Sermons", "Sermon day to upload", "Uploading Sermon for day"
+    )
+    return choose_archive_day(strings)
+
+
+def choose_archive_day(strings: ArchiveTypeStrings) -> list[str]:
+    # pylint: disable=unused-variable
+    app = QApplication([])
+    try:
+        dirs = sorted(listdir(const.CD_RECORD_OUTPUT_BASEDIR))
+        dirs.reverse()
+
+        if not dirs:
+            return [
+                f"Did not find any {strings.archive_type_plural} in: "
+                + f"{const.CD_RECORD_OUTPUT_BASEDIR}.",
+                "",
+            ]
+
+        dialog = RadioButtonDialog(
+            dirs, "Choose a " + f"{strings.action_to_choose}"
+        )
+        if dialog.exec_() == QDialog.Accepted:
+            log(f"{strings.action_ing_form} for day: {dialog.chosen}")
+            return ["", dialog.chosen]
+        return ["ignore", ""]
+    except (FileNotFoundError, PermissionError, IOError):
+        pass
+
+    return [
+        f"Failed to access directory: {const.CD_RECORD_OUTPUT_BASEDIR}.",
+        "",
+    ]

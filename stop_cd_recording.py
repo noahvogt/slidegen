@@ -22,14 +22,13 @@ from time import sleep
 from utils import (
     get_yyyy_mm_dd_date,
     make_sure_file_exists,
-    is_valid_cd_record_checkfile,
     error_msg,
-    mark_end_of_recording,
     get_unix_milis,
     warn,
 )
 from input import get_cachefile_content, validate_cd_record_config
 import config as const
+from recording import is_valid_cd_record_checkfile, mark_end_of_recording
 
 
 def stop_cd_recording() -> None:

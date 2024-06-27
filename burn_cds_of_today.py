@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from utils import burn_cds_of_day, get_yyyy_mm_dd_date
+from utils import get_yyyy_mm_dd_date
+from recording import burn_cds_of_day
 
 if __name__ == "__main__":
     burn_cds_of_day(get_yyyy_mm_dd_date())

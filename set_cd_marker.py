@@ -23,16 +23,15 @@ from re import match
 from utils import (
     get_yyyy_mm_dd_date,
     make_sure_file_exists,
-    is_valid_cd_record_checkfile,
     get_unix_milis,
     log,
     warn,
     error_msg,
     expand_dir,
-    mark_end_of_recording,
 )
 from input import get_cachefile_content, validate_cd_record_config
 import config as const
+from recording import is_valid_cd_record_checkfile, mark_end_of_recording
 
 
 def get_reset_marker(yyyy_mm_dd: str) -> int:
