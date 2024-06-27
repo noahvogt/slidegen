@@ -370,17 +370,15 @@ to switch to the scene with song 4.
 
 These are some issues and possible changes that will be addressed or at least considered by our future development efforts:
 
-- add more documentation, especially explaining the slide generation, but also the `PROMPT_INPUT` and the cd burning scripts
+- add more documentation, especially explaining the slide generation, but also the `PROMPT_INPUT` and the cd burning + sermon uploading scripts
 - add tests
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
 - add warnings that indicate potential problems with rclone syncing
 - Use obs websocket connection, cleaner that transition hotkeys. Also to deprecate pyautogui.
 - add (semantic) versioning, maybe even display on program run as text
 - add not-yet-public streaming workflow scripts
-- make sermon uploads for more than one suitable segment possible
-- make combined sermon segments possible
-- make multiplaform ejecting of cd drives possible
-- split up `util/scripts.py` in more source files
+- for sermon segment generating: Check if file duration and type roughly match the target to avoid useless regenerating. Also, parallelization.
+- make multiplatform ejecting of cd drives possible
 
 ## Licensing
 

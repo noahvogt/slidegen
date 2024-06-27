@@ -14,43 +14,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from os import path, listdir
-from time import sleep
 from re import match
 from enum import Enum
-from dataclasses import dataclass
 
-from pyautogui import keyDown, keyUp
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication,
     QMessageBox,
 )
-from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
-    QDialog,
-)
 from utils import (
     log,
-    error_msg,
     get_yyyy_mm_dd_date,
     expand_dir,
 )
-from input import RadioButtonDialog, get_cachefile_content, InfoMsgBox
+from input import get_cachefile_content, InfoMsgBox
 import config as const
-
-
-def make_sure_file_exists(cachefile: str) -> None:
-    if not path.isfile(cachefile):
-        try:
-            with open(
-                cachefile, mode="w+", encoding="utf-8-sig"
-            ) as file_creator:
-                file_creator.write("")
-        except (FileNotFoundError, PermissionError, IOError) as error:
-            error_msg(
-                "Failed to create file in '{}'. Reason: {}".format(
-                    cachefile, error
-                )
-            )
+from .obs import safe_send_hotkey
 
 
 class SongDirection(Enum):
@@ -111,11 +89,3 @@ def create_cachfile_for_song(song) -> None:
         )
         del app
         sys.exit(1)
-
-
-def safe_send_hotkey(hotkey: list, sleep_time=0.1) -> None:
-    for key in hotkey:
-        keyDown(key)
-    sleep(sleep_time)
-    for key in hotkey:
-        keyUp(key)

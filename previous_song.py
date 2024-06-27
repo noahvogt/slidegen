@@ -15,11 +15,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from utils import (
+from song_switcher import (
     SongDirection,
     cycle_to_song_direction,
-    make_sure_file_exists,
 )
+from utils import make_sure_file_exists
 from input import validate_obs_song_scene_switcher_config
 import config as const
 

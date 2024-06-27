@@ -13,10 +13,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .wave import (
-    get_wave_duration_in_secs,
-    get_ffmpeg_timestamp_from_frame,
-    get_wave_duration_in_frames,
-    get_index_line_as_frames,
-)
-from .custom import SermonSegment, ChosenAudio, AudioSourceFileType
+from .switch import SongDirection, cycle_to_song_direction, switch_to_song

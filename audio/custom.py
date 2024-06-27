@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
+from enum import Enum
 
 
 @dataclass
@@ -22,3 +23,15 @@ class SermonSegment:
     end_frame: int
     source_cue_sheet: str
     source_marker: int
+
+
+@dataclass
+class ChosenAudio:
+    sheet_rel_path: str
+    wave_abs_path: str
+
+
+@dataclass
+class AudioSourceFileType(Enum):
+    WAVE = "wave"
+    CUESHEET = "cuesheet"

@@ -20,8 +20,8 @@ from sys import argv
 from utils import (
     error_msg,
     make_sure_file_exists,
-    switch_to_song,
 )
+from song_switcher import switch_to_song
 from input import validate_obs_song_scene_switcher_config
 import config as const
 

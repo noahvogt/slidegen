@@ -33,8 +33,8 @@ from .validate_config import (
 from .slide_selection_iterator import slide_selection_iterator
 from .gui import (
     RadioButtonDialog,
-    InfoMsgBox,
-    SheetAndPreviewChooser,
     choose_cd_day,
     choose_sermon_day,
+    InfoMsgBox,
+    WaveAndSheetPreviewChooserGUI,
 )

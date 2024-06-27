@@ -19,22 +19,24 @@ from shlex import split
 from re import match
 from subprocess import Popen
 import ftplib
-from shutil import copy2
 
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication,
     QMessageBox,
     QInputDialog,
+    QDialog,
 )
 
-from utils import CustomException
+from utils import CustomException, expand_dir, log
 from input import InfoMsgBox
 from audio import (
     get_ffmpeg_timestamp_from_frame,
     SermonSegment,
     get_wave_duration_in_frames,
     get_index_line_as_frames,
+    AudioSourceFileType,
 )
+from input import WaveAndSheetPreviewChooserGUI
 import config as const
 from .verify import (
     get_padded_cd_num_from_sheet_filename,
@@ -72,24 +74,26 @@ def get_full_wav_path(segment: SermonSegment) -> str:
         sys.exit(1)
 
 
-def get_audio_base_path_from_segment(segment: SermonSegment) -> str:
+def get_audio_rel_path_from_segment(segment: SermonSegment) -> str:
     splitted_sheet_path = path.split(segment.source_cue_sheet)
     yyyy_mm_dd = path.split(splitted_sheet_path[0])[1]
     cd_num = get_padded_cd_num_from_sheet_filename(splitted_sheet_path[1])
-    mp3_path = path.join(
-        splitted_sheet_path[0],
-        f"{yyyy_mm_dd}-{cd_num}-segment-{segment.source_marker}",
+    return f"{yyyy_mm_dd}-{cd_num}-segment-{segment.source_marker}"
+
+
+def get_audio_base_path_from_segment(segment: SermonSegment) -> str:
+    base_path = path.split(segment.source_cue_sheet)[0]
+    return path.join(
+        base_path,
+        get_audio_rel_path_from_segment(segment),
     )
-    return mp3_path
 
 
-def make_sermon_segment_mp3(segment: SermonSegment) -> str:
-    full_wav_path = get_full_wav_path(segment)
-
-    mp3_path = f"{get_audio_base_path_from_segment(segment)}.mp3"
+def make_sermon_mp3(source_audio: str, target_audio: str) -> None:
+    log("Generating final mp3...")
     cmd = "ffmpeg -y -i {} -acodec libmp3lame {}".format(
-        full_wav_path,
-        mp3_path,
+        source_audio,
+        target_audio,
     )
     process = Popen(split(cmd))
     _ = process.communicate()[0]  # wait for subprocess to end
@@ -102,39 +106,37 @@ def make_sermon_segment_mp3(segment: SermonSegment) -> str:
         )
         del app
 
-    return mp3_path
+
+def generate_wav_for_segment(segment: SermonSegment) -> None:
+    cmd = (
+        f"ffmpeg -y -i {get_full_wav_path(segment)} -ss "
+        + f" {get_ffmpeg_timestamp_from_frame(segment.start_frame)} "
+        + f"-to {get_ffmpeg_timestamp_from_frame(segment.end_frame)} "
+        + f"-acodec copy {get_audio_base_path_from_segment(segment)}.wav"
+    )
+    process = Popen(split(cmd))
+    _ = process.communicate()[0]  # wait for subprocess to end
+    if process.returncode not in [255, 0]:
+        app = QApplication([])
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            "ffmpeg terminated with " + f"exit code {process.returncode}",
+        )
+        del app
+        sys.exit(1)
 
 
 def prepare_audio_files_for_segment_chooser(
     segments: list[SermonSegment],
 ) -> None:
     for segment in segments:
-        # TODO: check if file duration and type roughly match the target to
-        # avoid useless regenerating. Also, parallelization.
-        cmd = (
-            f"ffmpeg -y -i {get_full_wav_path(segment)} -ss "
-            + f" {get_ffmpeg_timestamp_from_frame(segment.start_frame)} "
-            + f"-to {get_ffmpeg_timestamp_from_frame(segment.end_frame)} "
-            + f"-acodec copy {get_audio_base_path_from_segment(segment)}.wav"
-        )
-        process = Popen(split(cmd))
-        _ = process.communicate()[0]  # wait for subprocess to end
-        if process.returncode not in [255, 0]:
-            app = QApplication([])
-            InfoMsgBox(
-                QMessageBox.Critical,
-                "Error",
-                "ffmpeg terminated with " + f"exit code {process.returncode}",
-            )
-            del app
-            sys.exit(1)
+        generate_wav_for_segment(segment)
 
 
 def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
     try:
         segments = []
-        base_frames = 0
-        max_frames = 0
 
         day_dir = path.join(const.CD_RECORD_OUTPUT_BASEDIR, yyyy_mm_dd)
         files = sorted(listdir(day_dir))
@@ -142,7 +144,7 @@ def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
         for file in files:
             if is_legal_sheet_filename(file):
                 cue_sheets.append(file)
-        for sheet_num, sheet in enumerate(cue_sheets):
+        for sheet in cue_sheets:
             with open(
                 path.join(day_dir, sheet),
                 mode="r",
@@ -206,13 +208,13 @@ def get_segments_with_suitable_time(
             segment.end_frame - segment.start_frame
             >= const.SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES
         ):
-            # if segment.end_frame - segment.start_frame >= 90000:  # 75 * 60 * 20
             suitable_segments.append(segment)
     return suitable_segments
 
 
-def upload_sermon_segment(segment: SermonSegment) -> None:
+def upload_sermon_audiofile(audiofile: str) -> None:
     try:
+        ext = ".mp3"
         session = ftplib.FTP_TLS(
             const.SERMON_UPLOAD_FTP_HOSTNAME,
             const.SERMON_UPLOAD_FTP_USER,
@@ -229,13 +231,13 @@ def upload_sermon_segment(segment: SermonSegment) -> None:
         wanted_filename, accepted_dialog = QInputDialog.getText(
             None,
             "Input Dialog",
-            "Enter the filename for the Sermon (the .mp3 can be omitted):",
+            f"Enter the filename for the Sermon (the {ext} can be omitted):",
         )
         del app
-        if not wanted_filename.endswith(".mp3"):
-            wanted_filename = wanted_filename + ".mp3"
+        if not wanted_filename.endswith(ext):
+            wanted_filename = wanted_filename + ext
 
-        if not accepted_dialog or wanted_filename == ".mp3":
+        if not accepted_dialog or wanted_filename == ext:
             session.quit()
             sys.exit(0)
         if wanted_filename in disallowed_filenames:
@@ -245,15 +247,17 @@ def upload_sermon_segment(segment: SermonSegment) -> None:
             session.quit()
             sys.exit(1)
 
-        orig_mp3 = make_sermon_segment_mp3(segment)
-        mp3_final_path = path.join(path.split(orig_mp3)[0], wanted_filename)
-        copy2(orig_mp3, mp3_final_path)
+        mp3_final_path = path.join(path.split(audiofile)[0], wanted_filename)
+        print(mp3_final_path)
+        make_sermon_mp3(audiofile, mp3_final_path)
 
         with open(mp3_final_path, "rb") as file:
             session.storbinary(f"STOR {path.split(mp3_final_path)[1]}", file)
         session.quit()
         InfoMsgBox(
-            QMessageBox.Information, "Success", "Sermon uploaded successfully."
+            QMessageBox.Information,
+            "Success",
+            f"Sermon '{mp3_final_path}' uploaded successfully.",
         )
     except (
         *ftplib.all_errors,
@@ -280,21 +284,81 @@ def upload_sermon_for_day(yyyy_mm_dd: str):
         sys.exit(1)
 
     suitable_segments = get_segments_with_suitable_time(segments)
-    # TODO: remove
-    # for segment in suitable_segments:
-    #     print(f"start {segment.start_frame}")
-    #     print(f"end {segment.end_frame}")
-    #     print(f"sheet {segment.source_cue_sheet}")
-    #     print(f"marker {segment.source_marker}")
-
-    if not suitable_segments:
-        # TODO: choose
-        prepare_audio_files_for_segment_chooser(segments)
-        InfoMsgBox(
-            QMessageBox.Critical, "Error", "Error: no suitable segment found"
+    if len(suitable_segments) == 1:
+        generate_wav_for_segment(suitable_segments[0])
+        target_path = (
+            f"{get_audio_base_path_from_segment(suitable_segments[0])}.wav"
         )
-    elif len(suitable_segments) == 1:
-        upload_sermon_segment(suitable_segments[0])
+        upload_sermon_audiofile(target_path)
     else:
-        # TODO: choose
-        pass
+        prepare_audio_files_for_segment_chooser(segments)
+        rel_wave_paths = []
+        for segment in segments:
+            rel_wave_paths.append(
+                f"{get_audio_rel_path_from_segment(segment)}.wav"
+            )
+
+        app = QApplication([])
+        target_dir = path.join(
+            expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd
+        )
+        dialog = WaveAndSheetPreviewChooserGUI(
+            target_dir,
+            rel_wave_paths,
+            f"Preview CD's for {yyyy_mm_dd}",
+            AudioSourceFileType.WAVE,
+        )
+        if dialog.exec_() == QDialog.Accepted:
+            if not dialog.chosen_audios:
+                sys.exit(0)
+            chosen_wave_paths = []
+            for chosen_audio in dialog.chosen_audios:
+                chosen_wave_paths.append(chosen_audio.wave_abs_path)
+
+            del app  # pyright: ignore
+
+            merge_wave_files(target_dir, chosen_wave_paths)
+            upload_sermon_audiofile(path.join(target_dir, "merged.wav"))
+
+
+def merge_wave_files(target_dir: str, wave_paths: list[str]) -> None:
+    concat_file_path = path.join(target_dir, "concat.txt")
+    log(f"Merging into mp3 file from wave files: {wave_paths}")
+    create_concat_file(concat_file_path, wave_paths)
+    merge_files_with_ffmpeg(concat_file_path, target_dir)
+
+
+def create_concat_file(file_path: str, wave_paths: list[str]) -> None:
+    try:
+        with open(file_path, mode="w+", encoding="utf-8") as writer:
+            for wave_path in wave_paths:
+                if not "'" in wave_path:
+                    writer.write(f"file '{wave_path}'\n")
+                else:
+                    writer.write(f'file "{wave_path}"\n')
+    except (FileNotFoundError, PermissionError, IOError) as error:
+        app = QApplication
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Failed to write to '{file_path}'. Reason: {error}",
+        )
+        del app
+        sys.exit(1)
+
+
+def merge_files_with_ffmpeg(concat_file_path, target_dir) -> None:
+    cmd = "ffmpeg -y -f concat -safe 0 -i {} -acodec copy {}".format(
+        concat_file_path,
+        path.join(target_dir, "merged.wav"),
+    )
+    process = Popen(split(cmd))
+    _ = process.communicate()[0]  # wait for subprocess to end
+    if process.returncode not in [255, 0]:
+        app = QApplication([])
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            "ffmpeg terminated with " + f"exit code {process.returncode}",
+        )
+        del app

@@ -13,26 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 
-from soundfile import SoundFile, LibsndfileError  # pyright: ignore
-from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
-    QMessageBox,
-)
+from time import sleep
+
+from pyautogui import keyDown, keyUp
 
 
-def get_wave_duration_in_frames(file_name: str) -> int:
-    try:
-        wav = SoundFile(file_name)
-        return int(wav.frames / wav.samplerate * 75)
-    except LibsndfileError:
-        QMessageBox.critical(
-            None,
-            "Error",
-            f"Error: Could not get duration of {file_name}",
-        )
-        sys.exit(1)
-
-
-def get_wave_duration_in_secs(file_name: str) -> int:
-    return int(get_wave_duration_in_frames(file_name) / 75)
+def safe_send_hotkey(hotkey: list, sleep_time=0.1) -> None:
+    for key in hotkey:
+        keyDown(key)
+    sleep(sleep_time)
+    for key in hotkey:
+        keyUp(key)

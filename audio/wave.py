@@ -29,7 +29,7 @@ def get_wave_duration_in_frames(file_name: str) -> int:
         QMessageBox.critical(
             None,
             "Error",
-            f"Error: Could not get duration of {file_name}",
+            f"Error: Could not get duration of '{file_name}'",
         )
         sys.exit(1)
 

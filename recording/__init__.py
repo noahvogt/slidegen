@@ -15,7 +15,7 @@
 
 from .sermon import (
     SermonSegment,
-    make_sermon_segment_mp3,
+    make_sermon_mp3,
     prepare_audio_files_for_segment_chooser,
     upload_sermon_for_day,
 )

@@ -13,11 +13,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+from os import path
+from .log import error_msg
 
 
 def expand_dir(directory: str) -> str:
-    expanded_user_dir = os.path.expanduser(directory)
-    expanded_user_and_env_vars_dir = os.path.expandvars(expanded_user_dir)
-    abs_path = os.path.abspath(expanded_user_and_env_vars_dir)
+    expanded_user_dir = path.expanduser(directory)
+    expanded_user_and_env_vars_dir = path.expandvars(expanded_user_dir)
+    abs_path = path.abspath(expanded_user_and_env_vars_dir)
     return abs_path
+
+
+def make_sure_file_exists(filename: str) -> None:
+    if not path.isfile(filename):
+        try:
+            with open(
+                filename, mode="w+", encoding="utf-8-sig"
+            ) as file_creator:
+                file_creator.write("")
+        except (FileNotFoundError, PermissionError, IOError) as error:
+            error_msg(
+                "Failed to create file in '{}'. Reason: {}".format(
+                    filename, error
+                )
+            )

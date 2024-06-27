@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from os import path
+from os import path, listdir
 from shlex import split
 from subprocess import Popen
 
@@ -32,10 +32,11 @@ from input import (
     InfoMsgBox,
     RadioButtonDialog,
     validate_cd_record_config,
-    SheetAndPreviewChooser,
+    WaveAndSheetPreviewChooserGUI,
 )
-from utils import expand_dir, log, get_yyyy_mm_dd_date
+from utils import expand_dir, log, make_sure_file_exists
 from os_agnostic import get_cd_drives, eject_drive
+from audio import AudioSourceFileType
 from .verify import (
     is_legal_sheet_filename,
     get_padded_cd_num_from_sheet_filename,
@@ -172,15 +173,22 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
             )
         else:
             app = QApplication([])
-            dialog = SheetAndPreviewChooser(
-                target_dir, cue_sheets, f"Preview CD's for {yyyy_mm_dd}"
+            dialog = WaveAndSheetPreviewChooserGUI(
+                target_dir,
+                cue_sheets,
+                f"Preview CD's for {yyyy_mm_dd}",
+                AudioSourceFileType.CUESHEET,
             )
             if dialog.exec_() == QDialog.Accepted:
-                if not dialog.chosen_sheets:
+                if not dialog.chosen_audios:
                     sys.exit(0)
-                log(f"Burning CD's from sheets: {dialog.chosen_sheets}")
-                num_of_chosen_sheets = len(dialog.chosen_sheets)
-                for num, sheet in enumerate(dialog.chosen_sheets):
+                chosen_sheets = []
+                for chosen_audio in dialog.chosen_audios:
+                    chosen_sheets.append(chosen_audio.sheet_rel_path)
+
+                log(f"Burning CD's from sheets: {chosen_sheets}")
+                num_of_chosen_sheets = len(dialog.chosen_audios)
+                for num, sheet in enumerate(chosen_sheets):
                     del app  # pyright: ignore
                     last_cd_to_burn = num == num_of_chosen_sheets
                     burn_and_eject_cd(
@@ -206,27 +214,6 @@ def exit_as_no_cds_found(target_dir):
         f"Error: Did not find any CD's in: {target_dir}.",
     )
     sys.exit(1)
-
-
-def create_cachfile_for_song(song) -> None:
-    log("writing song {} to cachefile...".format(song))
-    try:
-        with open(
-            const.NEXTSONG_CACHE_FILE, mode="w", encoding="utf-8-sig"
-        ) as file_writer:
-            file_writer.write(get_yyyy_mm_dd_date() + "\n")
-            file_writer.write(str(song) + "\n")
-    except (FileNotFoundError, PermissionError, IOError) as error:
-        app = QApplication
-        InfoMsgBox(
-            QMessageBox.Critical,
-            "Error",
-            "Failed to write to cachefile '{}'. Reason: {}".format(
-                const.NEXTSONG_CACHE_FILE, error
-            ),
-        )
-        del app
-        sys.exit(1)
 
 
 def mark_end_of_recording(cachefile_content: list) -> None:
