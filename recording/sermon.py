@@ -273,7 +273,7 @@ def upload_sermon_audiofile(audiofile: str) -> None:
         sys.exit(1)
 
 
-def upload_sermon_for_day(yyyy_mm_dd: str):
+def upload_sermon_for_day(yyyy_mm_dd: str, choose_manually=False):
     segments = get_possible_sermon_segments_of_day(yyyy_mm_dd)
     if not segments:
         InfoMsgBox(
@@ -284,41 +284,42 @@ def upload_sermon_for_day(yyyy_mm_dd: str):
         sys.exit(1)
 
     suitable_segments = get_segments_with_suitable_time(segments)
-    if len(suitable_segments) == 1:
+    if len(suitable_segments) == 1 and not choose_manually:
         generate_wav_for_segment(suitable_segments[0])
-        target_path = (
+        upload_sermon_audiofile(
             f"{get_audio_base_path_from_segment(suitable_segments[0])}.wav"
         )
-        upload_sermon_audiofile(target_path)
     else:
-        prepare_audio_files_for_segment_chooser(segments)
-        rel_wave_paths = []
-        for segment in segments:
-            rel_wave_paths.append(
-                f"{get_audio_rel_path_from_segment(segment)}.wav"
-            )
+        manually_choose_and_upload_segments(segments, yyyy_mm_dd)
 
-        app = QApplication([])
-        target_dir = path.join(
-            expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd
-        )
-        dialog = WaveAndSheetPreviewChooserGUI(
-            target_dir,
-            rel_wave_paths,
-            f"Preview CD's for {yyyy_mm_dd}",
-            AudioSourceFileType.WAVE,
-        )
-        if dialog.exec_() == QDialog.Accepted:
-            if not dialog.chosen_audios:
-                sys.exit(0)
-            chosen_wave_paths = []
-            for chosen_audio in dialog.chosen_audios:
-                chosen_wave_paths.append(chosen_audio.wave_abs_path)
 
-            del app  # pyright: ignore
+def manually_choose_and_upload_segments(segments, yyyy_mm_dd):
+    prepare_audio_files_for_segment_chooser(segments)
+    rel_wave_paths = []
+    for segment in segments:
+        rel_wave_paths.append(f"{get_audio_rel_path_from_segment(segment)}.wav")
 
-            merge_wave_files(target_dir, chosen_wave_paths)
-            upload_sermon_audiofile(path.join(target_dir, "merged.wav"))
+    app = QApplication([])
+    target_dir = path.join(
+        expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd
+    )
+    dialog = WaveAndSheetPreviewChooserGUI(
+        target_dir,
+        rel_wave_paths,
+        f"Preview CD's for {yyyy_mm_dd}",
+        AudioSourceFileType.WAVE,
+    )
+    if dialog.exec_() == QDialog.Accepted:
+        if not dialog.chosen_audios:
+            sys.exit(0)
+        chosen_wave_paths = []
+        for chosen_audio in dialog.chosen_audios:
+            chosen_wave_paths.append(chosen_audio.wave_abs_path)
+
+        del app  # pyright: ignore
+
+        merge_wave_files(target_dir, chosen_wave_paths)
+        upload_sermon_audiofile(path.join(target_dir, "merged.wav"))
 
 
 def merge_wave_files(target_dir: str, wave_paths: list[str]) -> None:

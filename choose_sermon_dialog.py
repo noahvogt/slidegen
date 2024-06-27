@@ -30,7 +30,7 @@ from input import (
 def choose_and_upload_sermon():
     msg, yyyy_mm_dd = choose_sermon_day()
     if msg == "":
-        upload_sermon_for_day(yyyy_mm_dd)
+        upload_sermon_for_day(yyyy_mm_dd, choose_manually=True)
     elif msg != "ignore":
         InfoMsgBox(QMessageBox.Critical, "Error", msg)
 
