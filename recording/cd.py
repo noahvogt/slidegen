@@ -31,14 +31,20 @@ import config as const
 from input import (
     validate_cd_burn_config,
 )
-from utils import expand_dir, log, make_sure_file_exists, InfoMsgBox
-from os_agnostic import get_cd_drives, eject_drive
+from utils import (
+    expand_dir,
+    log,
+    make_sure_file_exists,
+    InfoMsgBox,
+    RadioButtonDialog,
+)
+from os_agnostic import get_cd_drives, eject_drive, get_cdrecord_devname
 from audio import AudioSourceFileType
 from .verify import (
     is_legal_sheet_filename,
     get_padded_cd_num_from_sheet_filename,
 )
-from .gui import RadioButtonDialog, WaveAndSheetPreviewChooserGUI
+from .gui import WaveAndSheetPreviewChooserGUI
 
 
 def get_burn_cmd(cd_drive: str, yyyy_mm_dd, padded_zfill_num: str) -> str:
@@ -48,8 +54,8 @@ def get_burn_cmd(cd_drive: str, yyyy_mm_dd, padded_zfill_num: str) -> str:
         f"sheet-{padded_zfill_num}.cue",
     )
     return (
-        f"cdrecord -pad dev={cd_drive} -dao -swab -text -audio "
-        + f"-cuefile='{cue_sheet_path}'"
+        f"cdrecord -pad dev={get_cdrecord_devname(cd_drive)} -dao -swab "
+        + f"-text -audio -cuefile='{cue_sheet_path}'"
     )
 
 
@@ -187,7 +193,8 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
                 log(f"Burning CD's from sheets: {chosen_sheets}")
                 num_of_chosen_sheets = len(dialog.chosen_audios)
                 for num, sheet in enumerate(chosen_sheets):
-                    del app  # pyright: ignore
+                    if num == 0:
+                        del app  # pyright: ignore
                     last_cd_to_burn = num == num_of_chosen_sheets
                     burn_and_eject_cd(
                         yyyy_mm_dd,

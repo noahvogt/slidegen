@@ -13,4 +13,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .cd import eject_drive, get_cd_drives
+from .cd import eject_drive, get_cd_drives, get_cdrecord_devname
