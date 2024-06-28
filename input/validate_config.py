@@ -13,8 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from utils import log, error_msg
+import sys
 
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+    QMessageBox,
+)
+
+from utils import log, error_msg
+from input import InfoMsgBox
 import config as const
 
 
@@ -40,7 +47,7 @@ def validate_obs_song_scene_switcher_config() -> None:
         "OBS_TRANSITION_HOTKEY": const.OBS_TRANSITION_HOTKEY,
         "OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX": const.OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX,
     }
-    general_config_validator(needed_constants)
+    general_config_validator(needed_constants, gui_error_out=True)
 
 
 def validate_cd_burn_config() -> None:
@@ -48,7 +55,7 @@ def validate_cd_burn_config() -> None:
         "CD_RECORD_CACHEFILE": const.CD_RECORD_CACHEFILE,
         "CD_RECORD_OUTPUT_BASEDIR": const.CD_RECORD_OUTPUT_BASEDIR,
     }
-    general_config_validator(needed_constants)
+    general_config_validator(needed_constants, gui_error_out=True)
 
 
 def validate_cd_record_config() -> None:
@@ -59,7 +66,7 @@ def validate_cd_record_config() -> None:
         "CD_RECORD_MAX_SECONDS": const.CD_RECORD_MAX_SECONDS,
         "CD_RECORD_MIN_TRACK_MILIS": const.CD_RECORD_MIN_TRACK_MILIS,
     }
-    general_config_validator(needed_constants)
+    general_config_validator(needed_constants, gui_error_out=True)
 
 
 def validate_sermon_upload_config() -> None:
@@ -72,11 +79,20 @@ def validate_sermon_upload_config() -> None:
         "SERMON_UPLOAD_FTP_UPLOAD_DIR": const.SERMON_UPLOAD_FTP_UPLOAD_DIR,
         "SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES": const.SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES,
     }
-    general_config_validator(needed_constants)
+    general_config_validator(needed_constants, gui_error_out=True)
 
 
-def general_config_validator(needed_constants: dict) -> None:
+def general_config_validator(
+    needed_constants: dict, gui_error_out=False
+) -> None:
     for key in needed_constants:
         if needed_constants.get(key) == "":
-            error_msg("needed config entry '{}' is empty".format(key))
+            msg = "needed config entry '{}' is empty".format(key)
+            if not gui_error_out:
+                error_msg(msg)
+            app = QApplication
+            InfoMsgBox(QMessageBox.Critical, "Error", msg)
+            del app
+            sys.exit(1)
+
     log("configuration initialised")

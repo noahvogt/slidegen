@@ -28,5 +28,5 @@ import config as const
 if __name__ == "__main__":
     colorama.init()
     validate_obs_song_scene_switcher_config()
-    make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
+    make_sure_file_exists(const.NEXTSONG_CACHE_FILE, gui_error_out=True)
     cycle_to_song_direction(SongDirection.PREVIOUS)

@@ -13,7 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from re import match
+
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+    QMessageBox,
+)
 
 from utils import (
     error_msg,
@@ -22,7 +28,7 @@ from utils import (
     get_songtext_by_structure,
     expand_dir,
 )
-
+from input import InfoMsgBox
 import config as const
 
 
@@ -97,9 +103,14 @@ def get_cachefile_content(cachefile: str) -> list:
         ) as cachefile_reader:
             cachefile_content = cachefile_reader.readlines()
     except (FileNotFoundError, PermissionError, IOError) as error:
-        error_msg(
+        app = QApplication
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
             "Failed to access cachefile in '{}'. Reason: {}".format(
                 expanded_path, error
-            )
+            ),
         )
+        del app
+        sys.exit(1)
     return cachefile_content

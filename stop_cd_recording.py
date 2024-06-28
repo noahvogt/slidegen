@@ -15,26 +15,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from os import kill
 from signal import SIGTERM
 from time import sleep
 
 import colorama
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+    QMessageBox,
+)
 
 from utils import (
     get_yyyy_mm_dd_date,
     make_sure_file_exists,
-    error_msg,
     get_unix_milis,
     warn,
+    expand_dir,
 )
-from input import get_cachefile_content, validate_cd_record_config
+from input import get_cachefile_content, validate_cd_record_config, InfoMsgBox
 import config as const
 from recording import is_valid_cd_record_checkfile, mark_end_of_recording
 
 
 def stop_cd_recording() -> None:
-    cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
+    filename = expand_dir(const.CD_RECORD_CACHEFILE)
+    cachefile_content = get_cachefile_content(filename)
     yyyy_mm_dd = get_yyyy_mm_dd_date()
 
     if is_valid_cd_record_checkfile(cachefile_content, yyyy_mm_dd):
@@ -51,14 +57,28 @@ def stop_cd_recording() -> None:
         try:
             kill(int(cachefile_content[2]), SIGTERM)
         except ProcessLookupError:
-            error_msg("Recording not running, cannot be stopped.")
+            app = QApplication
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
+                "Recording not running, cannot be stopped.",
+            )
+            del app
+            sys.exit(1)
         mark_end_of_recording(cachefile_content)
     else:
-        error_msg("CD Record Checkfile is invalid.")
+        app = QApplication
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"CD Record Checkfile {filename} is invalid.",
+        )
+        del app
+        sys.exit(1)
 
 
 if __name__ == "__main__":
     colorama.init()
     validate_cd_record_config()
-    make_sure_file_exists(const.CD_RECORD_CACHEFILE)
+    make_sure_file_exists(const.CD_RECORD_CACHEFILE, gui_error_out=True)
     stop_cd_recording()

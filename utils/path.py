@@ -13,7 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from os import path
+
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+    QMessageBox,
+)
+
+from input import InfoMsgBox
 from .log import error_msg
 
 
@@ -24,14 +32,19 @@ def expand_dir(directory: str) -> str:
     return abs_path
 
 
-def make_sure_file_exists(filename: str) -> None:
-    if not path.isfile(filename):
+def make_sure_file_exists(filename: str, gui_error_out=False) -> None:
+    expanded = expand_dir(filename)
+    if not path.isfile(expanded):
         try:
-            with open(filename, mode="w+", encoding="utf-8") as file_creator:
+            with open(expanded, mode="w+", encoding="utf-8") as file_creator:
                 file_creator.write("")
         except (FileNotFoundError, PermissionError, IOError) as error:
-            error_msg(
-                "Failed to create file in '{}'. Reason: {}".format(
-                    filename, error
-                )
+            msg = "Failed to create file in '{}'. Reason: {}".format(
+                expanded, error
             )
+            if not gui_error_out:
+                error_msg(msg)
+            app = QApplication
+            InfoMsgBox(QMessageBox.Critical, "Error", msg)
+            del app
+            sys.exit(1)

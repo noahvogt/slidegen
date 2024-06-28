@@ -149,7 +149,7 @@ def burn_and_eject_cd(
 
 def burn_cds_of_day(yyyy_mm_dd: str) -> None:
     validate_cd_burn_config()
-    make_sure_file_exists(const.CD_RECORD_CACHEFILE)
+    make_sure_file_exists(const.CD_RECORD_CACHEFILE, gui_error_out=True)
 
     try:
         target_dir = path.join(

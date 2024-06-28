@@ -15,12 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from os import path, mkdir, listdir
 from shlex import split
 from subprocess import Popen
 from re import match
 
 import colorama
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+    QMessageBox,
+)
 
 from utils import (
     get_yyyy_mm_dd_date,
@@ -28,10 +33,9 @@ from utils import (
     get_unix_milis,
     log,
     warn,
-    error_msg,
     expand_dir,
 )
-from input import get_cachefile_content, validate_cd_record_config
+from input import get_cachefile_content, validate_cd_record_config, InfoMsgBox
 import config as const
 from recording import is_valid_cd_record_checkfile, mark_end_of_recording
 
@@ -86,11 +90,16 @@ def start_cd_recording() -> None:
                 file_writer.write(f"{unix_milis}\n")
                 file_writer.write(f"{cd_num}\n")
         except (FileNotFoundError, PermissionError, IOError) as error:
-            error_msg(
+            app = QApplication
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
                 "Failed to write to cachefile '{}'. Reason: {}".format(
                     cachefile, error
-                )
+                ),
             )
+            del app
+            sys.exit(1)
         fresh_cachefile_content = get_cachefile_content(
             const.CD_RECORD_CACHEFILE
         )
@@ -103,7 +112,14 @@ def start_cd_recording() -> None:
         cd_num += 1
         if process.returncode not in [255, 0]:
             mark_end_of_recording(cachefile_content)
-            error_msg(f"ffmpeg terminated with exit code {process.returncode}")
+            app = QApplication
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
+                f"ffmpeg terminated with exit code {process.returncode}",
+            )
+            del app
+            sys.exit(1)
 
 
 def ensure_output_dir_exists(date):
@@ -112,11 +128,16 @@ def ensure_output_dir_exists(date):
         if not path.exists(cue_sheet_dir):
             mkdir(cue_sheet_dir)
     except (FileNotFoundError, PermissionError, IOError) as error:
-        error_msg(
+        app = QApplication
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
             "Failed to create to cue sheet directory '{}'. Reason: {}".format(
                 cue_sheet_dir, error
-            )
+            ),
         )
+        del app
+        sys.exit(1)
 
 
 def create_cachefile_for_marker(
@@ -157,11 +178,16 @@ def create_cachefile_for_marker(
             else:
                 file_writer.write(f"{cachefile_content[5].strip()}\n")
     except (FileNotFoundError, PermissionError, IOError) as error:
-        error_msg(
+        app = QApplication
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
             "Failed to write to cachefile '{}'. Reason: {}".format(
                 cachefile, error
-            )
+            ),
         )
+        del app
+        sys.exit(1)
 
 
 def update_cue_sheet(
@@ -189,11 +215,16 @@ def update_cue_sheet(
                 file_writer.write("  TRACK 01 AUDIO\n")
                 file_writer.write("    INDEX 01 00:00:00\n")
         except (FileNotFoundError, PermissionError, IOError) as error:
-            error_msg(
+            app = QApplication
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
                 "Failed to write to cue sheet file '{}'. Reason: {}".format(
                     cue_sheet_path, error
-                )
+                ),
             )
+            del app
+            sys.exit(1)
     else:
         marker = int(cachefile_content[1]) + 1
         if marker > 99:
@@ -244,11 +275,16 @@ def update_cue_sheet(
                     )
                 )
         except (FileNotFoundError, PermissionError, IOError) as error:
-            error_msg(
+            app = QApplication
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
                 "Failed to write to cue sheet file '{}'. Reason: {}".format(
                     cue_sheet_path, error
-                )
+                ),
             )
+            del app
+            sys.exit(1)
 
 
 def set_cd_marker() -> None:
@@ -269,5 +305,5 @@ def set_cd_marker() -> None:
 if __name__ == "__main__":
     colorama.init()
     validate_cd_record_config()
-    make_sure_file_exists(const.CD_RECORD_CACHEFILE)
+    make_sure_file_exists(const.CD_RECORD_CACHEFILE, gui_error_out=True)
     set_cd_marker()
