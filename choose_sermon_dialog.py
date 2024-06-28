@@ -20,10 +20,9 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
 
-from recording import upload_sermon_for_day, choose_sermon_day,
+from recording import upload_sermon_for_day, choose_sermon_day
 from input import (
     validate_sermon_upload_config,
-
 )
 from utils import InfoMsgBox
 
