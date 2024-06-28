@@ -22,4 +22,4 @@ from .verify import (
     make_sure_there_is_no_ongoing_cd_recording,
 )
 from .cd import mark_end_of_recording, burn_cds_of_day
-from .gui import choose_sermon_day
+from .gui import choose_sermon_day, choose_cd_day
