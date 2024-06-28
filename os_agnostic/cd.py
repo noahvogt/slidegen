@@ -15,22 +15,22 @@
 
 import os
 
-from utils import log
+from utils import log, CustomException
 
 if os.name == "nt":
     # pylint: disable=import-error
     import wmi  # pyright: ignore
+    import ctypes
 else:
     from pycdio import DRIVER_DEVICE
     from cdio import (
         get_devices,
-        Device,
         DriverUnsupportedError,
         DeviceException,
     )
 
 
-def get_cd_drives() -> list:
+def get_cd_drives() -> list[str]:
     if os.name == "nt":
         c = wmi.WMI()
         cd_drives = []
@@ -38,14 +38,32 @@ def get_cd_drives() -> list:
             cd_drives.append(cd.Drive)
     # pylint: disable=possibly-used-before-assignment
     else:
-        cd_drives = get_devices(DRIVER_DEVICE)
+        raw_cd_drives = get_devices(DRIVER_DEVICE)
+        cd_drives = []
+        for cd in raw_cd_drives:
+            cd_drives.append(str(cd.get_device()))
     return cd_drives
 
 
 # pylint: disable=possibly-used-before-assignment
-def eject_drive(drive: Device) -> None:  # pyright: ignore
-    try:
-        drive.eject_media()  # pyright: ignore
-    # pylint: disable=possibly-used-before-assignment
-    except (DriverUnsupportedError, DeviceException):
-        log(f"Eject of CD-ROM drive {drive} failed")  # pyright: ignore
+def eject_drive(drive: str) -> None:  # pyright: ignore
+    if os.name == "nt":
+        ctypes.windll.WINMM.mciSendStringW(
+            f"open {drive} type cdaudio alias d_drive", None, 0, None
+        )
+        ctypes.windll.WINMM.mciSendStringW(
+            "set d_drive door open", None, 0, None
+        )
+    else:
+        try:
+            raw_drives = get_devices(DRIVER_DEVICE)
+            drive_ejected = False
+            for cd in raw_drives:
+                if str(cd.get_device()) == drive:
+                    drive.eject_media()  # pyright: ignore
+                    drive_ejected = True
+            if not drive_ejected:
+                raise CustomException(f"Drive {drive} not found")
+        # pylint: disable=possibly-used-before-assignment
+        except (DriverUnsupportedError, DeviceException, CustomException):
+            log(f"Eject of CD-ROM drive {drive} failed")  # pyright: ignore
