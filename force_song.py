@@ -23,11 +23,9 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
 
-from utils import (
-    make_sure_file_exists,
-)
+from utils import make_sure_file_exists, InfoMsgBox
 from song_switcher import switch_to_song
-from input import validate_obs_song_scene_switcher_config, InfoMsgBox
+from input import validate_obs_song_scene_switcher_config
 import config as const
 
 

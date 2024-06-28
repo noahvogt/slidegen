@@ -25,8 +25,9 @@ from utils import (
     log,
     get_yyyy_mm_dd_date,
     expand_dir,
+    InfoMsgBox,
 )
-from input import get_cachefile_content, InfoMsgBox
+from input import get_cachefile_content
 import config as const
 from .obs import safe_send_hotkey
 

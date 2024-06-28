@@ -22,8 +22,8 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
 )
 
 import config as const
-from utils import get_yyyy_mm_dd_date
-from input import InfoMsgBox, get_cachefile_content
+from utils import get_yyyy_mm_dd_date, InfoMsgBox
+from input import get_cachefile_content
 
 
 def is_valid_cd_record_checkfile(

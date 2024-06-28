@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .log import error_msg, warn, log, CustomException
+from .log import error_msg, warn, log, CustomException, InfoMsgBox
 from .strings import (
     get_songtext_by_structure,
     structure_as_list,

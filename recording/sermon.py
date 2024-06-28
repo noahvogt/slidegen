@@ -27,8 +27,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QDialog,
 )
 
-from utils import CustomException, expand_dir, log
-from input import InfoMsgBox
+from utils import CustomException, expand_dir, log, InfoMsgBox
 from audio import (
     get_ffmpeg_timestamp_from_frame,
     SermonSegment,
@@ -36,12 +35,12 @@ from audio import (
     get_index_line_as_frames,
     AudioSourceFileType,
 )
-from input import WaveAndSheetPreviewChooserGUI
 import config as const
 from .verify import (
     get_padded_cd_num_from_sheet_filename,
     is_legal_sheet_filename,
 )
+from .gui import WaveAndSheetPreviewChooserGUI
 
 
 def get_full_wav_path(segment: SermonSegment) -> str:

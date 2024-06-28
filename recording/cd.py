@@ -29,18 +29,16 @@ from PyQt5.QtCore import (  # pylint: disable=no-name-in-module
 
 import config as const
 from input import (
-    InfoMsgBox,
-    RadioButtonDialog,
     validate_cd_burn_config,
-    WaveAndSheetPreviewChooserGUI,
 )
-from utils import expand_dir, log, make_sure_file_exists
+from utils import expand_dir, log, make_sure_file_exists, InfoMsgBox
 from os_agnostic import get_cd_drives, eject_drive
 from audio import AudioSourceFileType
 from .verify import (
     is_legal_sheet_filename,
     get_padded_cd_num_from_sheet_filename,
 )
+from .gui import RadioButtonDialog, WaveAndSheetPreviewChooserGUI
 
 
 def get_burn_cmd(cd_drive: str, yyyy_mm_dd, padded_zfill_num: str) -> str:

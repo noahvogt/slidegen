@@ -27,8 +27,8 @@ from utils import (
     get_unique_structure_elements,
     get_songtext_by_structure,
     expand_dir,
+    InfoMsgBox,
 )
-from input import InfoMsgBox
 import config as const
 
 

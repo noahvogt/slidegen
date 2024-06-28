@@ -32,8 +32,9 @@ from utils import (
     get_unix_milis,
     warn,
     expand_dir,
+    InfoMsgBox,
 )
-from input import get_cachefile_content, validate_cd_record_config, InfoMsgBox
+from input import get_cachefile_content, validate_cd_record_config
 import config as const
 from recording import is_valid_cd_record_checkfile, mark_end_of_recording
 

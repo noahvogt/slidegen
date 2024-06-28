@@ -21,8 +21,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
 
-from input import InfoMsgBox
-from .log import error_msg
+from .log import error_msg, InfoMsgBox
 
 
 def expand_dir(directory: str) -> str:

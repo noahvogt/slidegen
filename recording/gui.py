@@ -61,25 +61,6 @@ class CheckBoxConstruct:
     check_box: QCheckBox
 
 
-# pylint: disable=too-few-public-methods
-class InfoMsgBox:
-    def __init__(self, icon: QMessageBox.Icon, title: str, text: str) -> None:
-        self.app = QApplication([])
-        self.title = title
-        self.text = text
-        self.icon = icon
-        self.show_msg_box()
-        self.app.exec_()
-
-    def show_msg_box(self):
-        self.message_box = QMessageBox()
-        self.message_box.setIcon(self.icon)
-        self.message_box.setWindowTitle(self.title)
-        self.message_box.setText(self.text)
-
-        self.message_box.show()
-
-
 class RadioButtonDialog(QDialog):  # pylint: disable=too-few-public-methods
     def __init__(self, options: list[str], window_title: str):
         super().__init__()
@@ -399,7 +380,3 @@ def choose_archive_day(strings: ArchiveTypeStrings) -> list[str]:
         f"Failed to access directory: {const.CD_RECORD_OUTPUT_BASEDIR}.",
         "",
     ]
-
-
-# class SheetAndPreviewChooser(WaveAndSheetPreviewChooserGUI):
-#     def __init__(self, )

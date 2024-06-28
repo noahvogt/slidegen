@@ -16,6 +16,29 @@
 import sys
 
 from termcolor import colored
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+    QMessageBox,
+)
+
+
+# pylint: disable=too-few-public-methods
+class InfoMsgBox:
+    def __init__(self, icon: QMessageBox.Icon, title: str, text: str) -> None:
+        self.app = QApplication([])
+        self.title = title
+        self.text = text
+        self.icon = icon
+        self.show_msg_box()
+        self.app.exec_()
+
+    def show_msg_box(self):
+        self.message_box = QMessageBox()
+        self.message_box.setIcon(self.icon)
+        self.message_box.setWindowTitle(self.title)
+        self.message_box.setText(self.text)
+
+        self.message_box.show()
 
 
 def error_msg(msg: str):

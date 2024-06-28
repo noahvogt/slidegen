@@ -20,8 +20,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
 
-from utils import log, error_msg
-from input import InfoMsgBox
+from utils import log, error_msg, InfoMsgBox
 import config as const
 
 
