@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
 
-from input import validate_cd_record_config
+from input import validate_cd_burn_config
 from recording import burn_cds_of_day, choose_cd_day
 from utils import InfoMsgBox
 
@@ -35,5 +35,5 @@ def choose_and_burn_cd():
 
 if __name__ == "__main__":
     colorama.init()
-    validate_cd_record_config()
+    validate_cd_burn_config()
     choose_and_burn_cd()
