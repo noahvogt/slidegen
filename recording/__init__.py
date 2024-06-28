@@ -14,9 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from .sermon import (
-    SermonSegment,
     make_sermon_mp3,
-    prepare_audio_files_for_segment_chooser,
     upload_sermon_for_day,
 )
 from .verify import (
@@ -24,3 +22,4 @@ from .verify import (
     make_sure_there_is_no_ongoing_cd_recording,
 )
 from .cd import mark_end_of_recording, burn_cds_of_day
+from .gui import choose_sermon_day
