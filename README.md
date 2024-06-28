@@ -313,6 +313,7 @@ First, install a reasonably new version of
 
 - [git](https://git-scm.com/)
 - [ffmpeg](https://ffmpeg.org/)
+- [cdrtools](https://sourceforge.net/projects/cdrtools/files/)
 - [fzf](https://github.com/junegunn/fzf)
 - [imagemagick](https://imagemagick.org/script/download.php) (If you are a windows user, select the c/c++ developer headers. Also you may need vcredist for imagemagick to work.)
 - [python3](https://www.python.org/)

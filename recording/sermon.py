@@ -49,7 +49,7 @@ def get_full_wav_path(segment: SermonSegment) -> str:
         with open(
             segment.source_cue_sheet,
             mode="r",
-            encoding="utf-8-sig",
+            encoding="utf-8",
         ) as cue_sheet_reader:
             cue_sheet_content = cue_sheet_reader.readlines()
         first_line = cue_sheet_content[0].strip()
@@ -148,7 +148,7 @@ def get_possible_sermon_segments_of_day(yyyy_mm_dd: str) -> list[SermonSegment]:
             with open(
                 path.join(day_dir, sheet),
                 mode="r",
-                encoding="utf-8-sig",
+                encoding="utf-8",
             ) as sheet_reader:
                 sheet_content = sheet_reader.readlines()
             start_frame = 0

@@ -27,9 +27,7 @@ def expand_dir(directory: str) -> str:
 def make_sure_file_exists(filename: str) -> None:
     if not path.isfile(filename):
         try:
-            with open(
-                filename, mode="w+", encoding="utf-8-sig"
-            ) as file_creator:
+            with open(filename, mode="w+", encoding="utf-8") as file_creator:
                 file_creator.write("")
         except (FileNotFoundError, PermissionError, IOError) as error:
             error_msg(

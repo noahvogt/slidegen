@@ -31,7 +31,7 @@ import config as const
 from input import (
     InfoMsgBox,
     RadioButtonDialog,
-    validate_cd_record_config,
+    validate_cd_burn_config,
     WaveAndSheetPreviewChooserGUI,
 )
 from utils import expand_dir, log, make_sure_file_exists
@@ -148,7 +148,7 @@ def burn_and_eject_cd(
 
 
 def burn_cds_of_day(yyyy_mm_dd: str) -> None:
-    validate_cd_record_config()
+    validate_cd_burn_config()
     make_sure_file_exists(const.CD_RECORD_CACHEFILE)
 
     try:
@@ -221,7 +221,7 @@ def mark_end_of_recording(cachefile_content: list) -> None:
 
     log("marking end of recording...")
     try:
-        with open(cachefile, mode="w+", encoding="utf-8-sig") as file_writer:
+        with open(cachefile, mode="w+", encoding="utf-8") as file_writer:
             file_writer.write(cachefile_content[0].strip() + "\n")
             file_writer.write("9001\n")
             file_writer.write(cachefile_content[2].strip() + "\n")

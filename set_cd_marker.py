@@ -75,9 +75,7 @@ def start_cd_recording() -> None:
         cachefile = expand_dir(const.CD_RECORD_CACHEFILE)
         log("updating active ffmpeg pid")
         try:
-            with open(
-                cachefile, mode="w+", encoding="utf-8-sig"
-            ) as file_writer:
+            with open(cachefile, mode="w+", encoding="utf-8") as file_writer:
                 file_writer.write(cachefile_content[0].strip() + "\n")
                 # reset marker to 1
                 file_writer.write("1\n")
@@ -142,7 +140,7 @@ def create_cachefile_for_marker(
 
     log("writing cd marker {} to cachefile...".format(marker))
     try:
-        with open(cachefile, mode="w+", encoding="utf-8-sig") as file_writer:
+        with open(cachefile, mode="w+", encoding="utf-8") as file_writer:
             file_writer.write(f"{yyyy_mm_dd}\n")
             file_writer.write(f"{marker}\n")
             if initial_run:
@@ -183,7 +181,7 @@ def update_cue_sheet(
             if not path.exists(cue_sheet_dir):
                 mkdir(cue_sheet_dir)
             with open(
-                cue_sheet_path, mode="w+", encoding="utf-8-sig"
+                cue_sheet_path, mode="w+", encoding="utf-8"
             ) as file_writer:
                 file_writer.write(f'FILE "{wave_path}" WAVE\n')
                 file_writer.write("  TRACK 01 AUDIO\n")
@@ -235,7 +233,7 @@ def update_cue_sheet(
         log("updating cue sheet...")
         try:
             with open(
-                cue_sheet_path, mode="a", encoding="utf-8-sig"
+                cue_sheet_path, mode="a", encoding="utf-8"
             ) as file_writer:
                 file_writer.write("  TRACK {:02d} AUDIO\n".format(marker))
                 file_writer.write(

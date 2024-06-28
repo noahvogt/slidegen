@@ -43,10 +43,18 @@ def validate_obs_song_scene_switcher_config() -> None:
     general_config_validator(needed_constants)
 
 
-def validate_cd_record_config() -> None:
+def validate_cd_burn_config() -> None:
     needed_constants: dict = {
         "CD_RECORD_CACHEFILE": const.CD_RECORD_CACHEFILE,
         "CD_RECORD_OUTPUT_BASEDIR": const.CD_RECORD_OUTPUT_BASEDIR,
+    }
+    general_config_validator(needed_constants)
+
+
+def validate_cd_record_config() -> None:
+    validate_cd_burn_config()
+
+    needed_constants: dict = {
         "CD_RECORD_FFMPEG_INPUT_ARGS": const.CD_RECORD_FFMPEG_INPUT_ARGS,
         "CD_RECORD_MAX_SECONDS": const.CD_RECORD_MAX_SECONDS,
         "CD_RECORD_MIN_TRACK_MILIS": const.CD_RECORD_MIN_TRACK_MILIS,
@@ -55,9 +63,9 @@ def validate_cd_record_config() -> None:
 
 
 def validate_sermon_upload_config() -> None:
+    validate_cd_burn_config()
+
     needed_constants: dict = {
-        "CD_RECORD_CACHEFILE": const.CD_RECORD_CACHEFILE,
-        "CD_RECORD_OUTPUT_BASEDIR": const.CD_RECORD_OUTPUT_BASEDIR,
         "SERMON_UPLOAD_FTP_HOSTNAME": const.SERMON_UPLOAD_FTP_HOSTNAME,
         "SERMON_UPLOAD_FTP_USER": const.SERMON_UPLOAD_FTP_USER,
         "SERMON_UPLOAD_FTP_PASSWORD": const.SERMON_UPLOAD_FTP_PASSWORD,
