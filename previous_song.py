@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import colorama
+
 from song_switcher import (
     SongDirection,
     cycle_to_song_direction,
@@ -24,6 +26,7 @@ from input import validate_obs_song_scene_switcher_config
 import config as const
 
 if __name__ == "__main__":
+    colorama.init()
     validate_obs_song_scene_switcher_config()
     make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
     cycle_to_song_direction(SongDirection.PREVIOUS)

@@ -17,6 +17,8 @@
 
 from sys import argv
 
+import colorama
+
 from utils import (
     error_msg,
     make_sure_file_exists,
@@ -43,6 +45,7 @@ def exit_if_force_int_is_illegal():
 
 
 if __name__ == "__main__":
+    colorama.init()
     validate_obs_song_scene_switcher_config()
     make_sure_file_exists(const.NEXTSONG_CACHE_FILE)
     exit_if_force_int_is_illegal()

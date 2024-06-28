@@ -42,7 +42,7 @@ def ssync(ssync_flags: SsyncFlags, slide_style: SlideStyle) -> None:
     slide_selection_iterator(ssync_flags.disable_async_enabled, slide_style)
 
 
-def main() -> None:
+if __name__ == "__main__":
     colorama.init()
 
     classic_slide_style = SlideStyle(
@@ -53,7 +53,3 @@ def main() -> None:
     ssync_flags = SsyncFlags(*parse_ssync_args_as_tuple())
 
     ssync(ssync_flags, classic_slide_style)
-
-
-if __name__ == "__main__":
-    main()

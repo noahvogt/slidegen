@@ -19,6 +19,8 @@ from os import kill
 from signal import SIGTERM
 from time import sleep
 
+import colorama
+
 from utils import (
     get_yyyy_mm_dd_date,
     make_sure_file_exists,
@@ -55,11 +57,8 @@ def stop_cd_recording() -> None:
         error_msg("CD Record Checkfile is invalid.")
 
 
-def main() -> None:
+if __name__ == "__main__":
+    colorama.init()
     validate_cd_record_config()
     make_sure_file_exists(const.CD_RECORD_CACHEFILE)
     stop_cd_recording()
-
-
-if __name__ == "__main__":
-    main()

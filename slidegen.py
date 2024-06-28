@@ -76,7 +76,7 @@ class Slidegen:
         )
 
 
-def main() -> None:
+if __name__ == "__main__":
     colorama.init()
 
     classic_slide_style = SlideStyle(
@@ -86,7 +86,3 @@ def main() -> None:
     )
     slidegen = Slidegen(classic_slide_style, *parse_slidegen_argv_as_tuple())
     slidegen.execute()
-
-
-if __name__ == "__main__":
-    main()

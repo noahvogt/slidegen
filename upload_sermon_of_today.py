@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import colorama
+
 from utils import (
     get_yyyy_mm_dd_date,
 )
@@ -28,6 +30,7 @@ from input import (
 
 
 if __name__ == "__main__":
+    colorama.init()
     validate_sermon_upload_config()
     make_sure_there_is_no_ongoing_cd_recording()
     upload_sermon_for_day(get_yyyy_mm_dd_date())

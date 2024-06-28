@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import colorama
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
@@ -36,5 +37,6 @@ def choose_and_upload_sermon():
 
 
 if __name__ == "__main__":
+    colorama.init()
     validate_sermon_upload_config()
     choose_and_upload_sermon()

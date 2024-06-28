@@ -20,6 +20,8 @@ from shlex import split
 from subprocess import Popen
 from re import match
 
+import colorama
+
 from utils import (
     get_yyyy_mm_dd_date,
     make_sure_file_exists,
@@ -264,11 +266,8 @@ def set_cd_marker() -> None:
         start_cd_recording()
 
 
-def main() -> None:
+if __name__ == "__main__":
+    colorama.init()
     validate_cd_record_config()
     make_sure_file_exists(const.CD_RECORD_CACHEFILE)
     set_cd_marker()
-
-
-if __name__ == "__main__":
-    main()
