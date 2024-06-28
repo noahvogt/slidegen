@@ -112,7 +112,7 @@ def choose_right_cd_drive(drives: list) -> str:
 
         dialog = RadioButtonDialog(drives, "Choose a CD to Burn")
         if dialog.exec_() == QDialog.Accepted:
-            print(f"Dialog accepted: {dialog.chosen_sheets}")
+            log(f"Dialog accepted: {dialog.chosen_sheets}")
             return dialog.chosen_sheets
         log("Warning: Choosing first cd drive...", color="yellow")
 

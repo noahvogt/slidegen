@@ -247,7 +247,6 @@ def upload_sermon_audiofile(audiofile: str) -> None:
             sys.exit(1)
 
         mp3_final_path = path.join(path.split(audiofile)[0], wanted_filename)
-        print(mp3_final_path)
         make_sermon_mp3(audiofile, mp3_final_path)
 
         with open(mp3_final_path, "rb") as file:

@@ -44,14 +44,11 @@ from recording import is_valid_cd_record_checkfile, mark_end_of_recording
 def get_reset_marker(yyyy_mm_dd: str) -> int:
     max_reset = 0
     for file in listdir(path.join(const.CD_RECORD_OUTPUT_BASEDIR, yyyy_mm_dd)):
-        print(file)
         if (
             match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]+\.wav$", file)
             and len(file) == 22
         ):
-            print(f"file {file} reached")
             max_reset = max(int(file[11:18]), max_reset)
-            print(max_reset)
     return max_reset + 1
 
 

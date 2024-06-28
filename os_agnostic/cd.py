@@ -53,7 +53,7 @@ def choose_right_scsi_drive(drives: list) -> str:
         # pylint: disable=possibly-used-before-assignment
         dialog = RadioButtonDialog(drives, "Choose a SCSI Drive")
         if dialog.exec_() == QDialog.Accepted:
-            print(f"Dialog accepted: {dialog.chosen}")
+            log(f"Dialog accepted: {dialog.chosen}")
             return dialog.chosen
         log("Warning: Choosing first SCSI drive...", color="yellow")
 
@@ -73,6 +73,9 @@ def bytes_line_ends_with(line: bytes, target: str) -> bool:
     if byte_len < len(target):
         return False
 
+    if len(target) == 1 and ord(target[0]) != line[-1]:
+        return False
+
     for index in range(-1, -1 * len(target), -1):
         if ord(target[index]) != line[index]:
             return False
@@ -89,10 +92,6 @@ def get_scsi_drives() -> list[str]:
         if result.returncode != 0:
             raise CustomException("Command 'cdrecord -scanbus' failed.")
         for line in output.split(b"\n"):
-            print(line)
-            print(match(rb"\s*[0-9](,[0-9])+\s*[0-9]+", line))
-            print(not bytes_line_ends_with(line, "*"))
-            print(not bytes_line_ends_with(line, "HOST ADAPTOR"))
             # pylint: disable=possibly-used-before-assignment
             if (
                 match(rb"\s*[0-9](,[0-9])+\s*[0-9]+", line)
