@@ -90,6 +90,9 @@ def get_scsi_drives() -> list[str]:
             raise CustomException("Command 'cdrecord -scanbus' failed.")
         for line in output.split(b"\n"):
             print(line)
+            print(match(rb"\s*[0-9](,[0-9])+\s*[0-9]+", line))
+            print(not bytes_line_ends_with(line, "*"))
+            print(not bytes_line_ends_with(line, "HOST ADAPTOR"))
             # pylint: disable=possibly-used-before-assignment
             if (
                 match(rb"\s*[0-9](,[0-9])+\s*[0-9]+", line)
