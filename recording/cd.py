@@ -123,6 +123,7 @@ def burn_and_eject_cd(
     yyyy_mm_dd: str, padded_cd_num: str, expect_next_cd=False
 ) -> None:
     cd_drives = get_cd_drives()
+    cd_num = padded_cd_num.lstrip("0")
     if not cd_drives:
         InfoMsgBox(
             QMessageBox.Critical,
@@ -139,16 +140,21 @@ def burn_and_eject_cd(
         extra_success_msg = "Please put the next CD into the drive slot before clicking the button."
     else:
         extra_success_msg = ""
+
+    eject_drive(drive)
+
     if burn_success:
         InfoMsgBox(
             QMessageBox.Info,
             "Info",
-            "Successfully burned CD." + extra_success_msg,
+            f"Successfully burned CD #{cd_num}. " + extra_success_msg,
         )
     else:
-        InfoMsgBox(QMessageBox.Critical, "Error", "Error: Failed to burn CD.")
-
-    eject_drive(drive)
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: Failed to burn CD #{cd_num}.",
+        )
 
 
 def burn_cds_of_day(yyyy_mm_dd: str) -> None:
@@ -195,11 +201,11 @@ def burn_cds_of_day(yyyy_mm_dd: str) -> None:
                 for num, sheet in enumerate(chosen_sheets):
                     if num == 0:
                         del app  # pyright: ignore
-                    last_cd_to_burn = num == num_of_chosen_sheets
+                    last_cd_to_burn = num + 1 == num_of_chosen_sheets
                     burn_and_eject_cd(
                         yyyy_mm_dd,
                         get_padded_cd_num_from_sheet_filename(sheet),
-                        last_cd_to_burn,
+                        not last_cd_to_burn,
                     )
 
     except (FileNotFoundError, PermissionError, IOError):
