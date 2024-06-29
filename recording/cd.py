@@ -145,7 +145,7 @@ def burn_and_eject_cd(
 
     if burn_success:
         InfoMsgBox(
-            QMessageBox.Info,
+            QMessageBox.Information,
             "Info",
             f"Successfully burned CD #{cd_num}. " + extra_success_msg,
         )

@@ -59,8 +59,6 @@ class CheckBoxConstruct:
     check_box: QCheckBox
 
 
-
-
 class WaveAndSheetPreviewChooserGUI(
     QDialog
 ):  # pylint: disable=too-few-public-methods
@@ -97,7 +95,10 @@ class WaveAndSheetPreviewChooserGUI(
                     f"Segment {(num+1):0{const.CD_RECORD_FILENAME_ZFILL}}"
                 )
             else:
-                check_box = QCheckBox(item)
+                cd_numbering = "CD #" + item[
+                    item.find("-") + 1 : item.find(".")
+                ].lstrip("0")
+                check_box = QCheckBox(cd_numbering)
             if num == 0 and source_type is AudioSourceFileType.CUESHEET:
                 check_box.setChecked(True)
             button_layout = QHBoxLayout()
