@@ -163,6 +163,7 @@ class WaveAndSheetPreviewChooserGUI(
         mins = secs // 60
         secs %= 60
         time_label = QLabel(f"00:00 / {mins:02}:{secs:02}")
+        time_label.setMinimumSize(QSize(90, 10))
         return time_label
 
     def play_audio(self, rel_path: str) -> None:
