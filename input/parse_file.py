@@ -95,7 +95,7 @@ def parse_songtext(slidegen) -> None:
     slidegen.songtext = output_dict
 
 
-def get_cachefile_content(cachefile: str) -> list:
+def get_cachefile_content(cachefile: str, suppress_error=False) -> list:
     expanded_path = expand_dir(cachefile)
     try:
         with open(
@@ -103,6 +103,8 @@ def get_cachefile_content(cachefile: str) -> list:
         ) as cachefile_reader:
             cachefile_content = cachefile_reader.readlines()
     except (FileNotFoundError, PermissionError, IOError) as error:
+        if suppress_error:
+            return ["0", "0", "0", "0", "0", "0"]
         app = QApplication
         InfoMsgBox(
             QMessageBox.Critical,

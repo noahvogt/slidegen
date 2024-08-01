@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright © 2024 Noah Vogt <noah@noahvogt.com>
 
 # This program is free software: you can redistribute it and/or modify
@@ -13,16 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .sermon import (
-    make_sermon_mp3,
-    upload_sermon_for_day,
-)
-from .verify import (
-    is_valid_cd_record_checkfile,
-    make_sure_there_is_no_ongoing_cd_recording,
-    ongoing_cd_recording_detected,
-    calc_cuesheet_timestamp,
-)
-from .cd import mark_end_of_recording, burn_cds_of_day
-from .gui import choose_sermon_day, choose_cd_day
-from .status_display import cd_recording_status_webserver
+from recording import cd_recording_status_webserver
+
+if __name__ == "__main__":
+    cd_recording_status_webserver.run()

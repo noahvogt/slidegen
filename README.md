@@ -380,6 +380,10 @@ These are some issues and possible changes that will be addressed or at least co
 - add not-yet-public streaming workflow scripts
 - for sermon segment generating: Check if file duration and type roughly match the target to avoid useless regenerating. Also, parallelization.
 - make multiplatform ejecting of cd drives possible
+- fix cd recording edge cases when:
+    - a new day starts during the recording
+    - changing timezone
+    - changing time
 
 ## Licensing
 

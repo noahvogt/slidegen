@@ -68,6 +68,16 @@ def stop_cd_recording() -> None:
             sys.exit(1)
         mark_end_of_recording(cachefile_content)
     else:
+        if cachefile_content[1].strip() == "9001":
+            app = QApplication
+            InfoMsgBox(
+                QMessageBox.Warning,
+                "Warning",
+                "CD Recording stopped already.",
+            )
+            del app
+            sys.exit(0)
+
         app = QApplication
         InfoMsgBox(
             QMessageBox.Critical,

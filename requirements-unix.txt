@@ -5,3 +5,5 @@ pyautogui
 PyQt5
 pycdio
 soundfile
+Flask
+psutil

@@ -21,9 +21,21 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QMessageBox,
 )
 
+from psutil import pid_exists
+
 import config as const
-from utils import get_yyyy_mm_dd_date, InfoMsgBox
+from utils import get_yyyy_mm_dd_date, InfoMsgBox, expand_dir
 from input import get_cachefile_content
+
+
+def calc_cuesheet_timestamp(start_milis: int, current_milis: int) -> str:
+    milis_diff = current_milis - start_milis
+    mins = milis_diff // 60000
+    milis_diff -= 60000 * mins
+    secs = int(milis_diff / 1000)
+    milis_diff -= 1000 * secs
+    frames = int(75 / 1000 * milis_diff)
+    return "{:02d}:{:02d}:{:02d}\n".format(mins, secs, frames)
 
 
 def is_valid_cd_record_checkfile(
@@ -48,19 +60,27 @@ def is_valid_cd_record_checkfile(
     )
 
 
-def make_sure_there_is_no_ongoing_cd_recording() -> None:
-    if path.isfile(const.CD_RECORD_CACHEFILE):
+def ongoing_cd_recording_detected() -> bool:
+    if path.isfile(expand_dir(const.CD_RECORD_CACHEFILE)):
         cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
         if is_valid_cd_record_checkfile(
             cachefile_content, get_yyyy_mm_dd_date()
         ):
-            if cachefile_content[1].strip() != "9001":
-                InfoMsgBox(
-                    QMessageBox.Critical,
-                    "Error",
-                    "Error: Ongoing CD Recording detected",
-                )
-                sys.exit(1)
+            if cachefile_content[1].strip() != "9001" and pid_exists(
+                int(cachefile_content[2].strip())
+            ):
+                return True
+    return False
+
+
+def make_sure_there_is_no_ongoing_cd_recording() -> None:
+    if ongoing_cd_recording_detected():
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            "Error: Ongoing CD Recording detected",
+        )
+        sys.exit(1)
 
 
 def is_legal_sheet_filename(filename: str) -> bool:

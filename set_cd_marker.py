@@ -38,7 +38,12 @@ from utils import (
 )
 from input import get_cachefile_content, validate_cd_record_config
 import config as const
-from recording import is_valid_cd_record_checkfile, mark_end_of_recording
+from recording import (
+    is_valid_cd_record_checkfile,
+    mark_end_of_recording,
+    ongoing_cd_recording_detected,
+    calc_cuesheet_timestamp,
+)
 
 
 def get_reset_marker(yyyy_mm_dd: str) -> int:
@@ -254,12 +259,7 @@ def update_cue_sheet(
             )
             return
 
-        milis_diff = unix_milis - start_milis
-        mins = milis_diff // 60000
-        milis_diff -= 60000 * mins
-        secs = int(milis_diff / 1000)
-        milis_diff -= 1000 * secs
-        frames = int(75 / 1000 * milis_diff)
+        timestamp = calc_cuesheet_timestamp(start_milis, unix_milis)
 
         log("updating cue sheet...")
         try:
@@ -267,11 +267,7 @@ def update_cue_sheet(
                 cue_sheet_path, mode="a", encoding="utf-8"
             ) as file_writer:
                 file_writer.write("  TRACK {:02d} AUDIO\n".format(marker))
-                file_writer.write(
-                    "    INDEX 01 {:02d}:{:02d}:{:02d}\n".format(
-                        mins, secs, frames
-                    )
-                )
+                file_writer.write(f"    INDEX 01 {timestamp}\n")
         except (FileNotFoundError, PermissionError, IOError) as error:
             app = QApplication
             InfoMsgBox(
@@ -291,7 +287,10 @@ def set_cd_marker() -> None:
     unix_milis = get_unix_milis()
     cachefile_and_time_data = (cachefile_content, yyyy_mm_dd, unix_milis)
 
-    if is_valid_cd_record_checkfile(*cachefile_and_time_data[:-1]):
+    if (
+        is_valid_cd_record_checkfile(*cachefile_and_time_data[:-1])
+        and ongoing_cd_recording_detected()
+    ):
         create_cachefile_for_marker(*cachefile_and_time_data)
         update_cue_sheet(*cachefile_and_time_data)
     else:
