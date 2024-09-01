@@ -90,7 +90,7 @@ def get_audio_base_path_from_segment(segment: SermonSegment) -> str:
 
 def make_sermon_mp3(source_audio: str, target_audio: str) -> None:
     log("Generating final mp3...")
-    cmd = "ffmpeg -y -i {} -acodec libmp3lame {}".format(
+    cmd = "ffmpeg -y -i \"{}\" -acodec libmp3lame \"{}\"".format(
         source_audio,
         target_audio,
     )
@@ -108,11 +108,17 @@ def make_sermon_mp3(source_audio: str, target_audio: str) -> None:
 
 def generate_wav_for_segment(segment: SermonSegment) -> None:
     cmd = (
-        f"ffmpeg -y -i {get_full_wav_path(segment)} -ss "
+        f"ffmpeg -y -i \"{get_full_wav_path(segment)}\" -ss "
         + f" {get_ffmpeg_timestamp_from_frame(segment.start_frame)} "
         + f"-to {get_ffmpeg_timestamp_from_frame(segment.end_frame)} "
-        + f"-acodec copy {get_audio_base_path_from_segment(segment)}.wav"
+        + f"-acodec copy \"{get_audio_base_path_from_segment(segment)}.wav\""
     )
+    if segment.start_frame >= segment.end_frame:
+        log("Empty segment detected, generating silent 1 sec wav in place...")
+        cmd = (
+            "ffmpeg -y -f lavfi -i anullsrc=r=11025:cl=mono -t 1 "
+            + f"\"{get_audio_base_path_from_segment(segment)}.wav\""
+        )
     process = Popen(split(cmd))
     _ = process.communicate()[0]  # wait for subprocess to end
     if process.returncode not in [255, 0]:
@@ -347,7 +353,7 @@ def create_concat_file(file_path: str, wave_paths: list[str]) -> None:
 
 
 def merge_files_with_ffmpeg(concat_file_path, target_dir) -> None:
-    cmd = "ffmpeg -y -f concat -safe 0 -i {} -acodec copy {}".format(
+    cmd = "ffmpeg -y -f concat -safe 0 -i \"{}\" -acodec copy \"{}\"".format(
         concat_file_path,
         path.join(target_dir, "merged.wav"),
     )

@@ -13,5 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .cd import eject_drive, get_cd_drives, get_cdrecord_devname
-from .tasks import kill_process
+import os
+
+if os.name == "nt":
+    from signal import SIGTERM
+else:
+    from subprocess import call
+
+
+def kill_process(pid: int) -> None:
+    if os.name == "nt":
+        call(["taskkill", "/F", "/T", "/PID", str(pid)])
+    else:
+        os.kill(pid, SIGTERM)

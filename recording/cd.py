@@ -55,7 +55,7 @@ def get_burn_cmd(cd_drive: str, yyyy_mm_dd, padded_zfill_num: str) -> str:
     )
     return (
         f"cdrecord -pad dev={get_cdrecord_devname(cd_drive)} -dao -swab "
-        + f"-text -audio -cuefile='{cue_sheet_path}'"
+        + f"-text -audio -overburn -cuefile='{cue_sheet_path}'"
     )
 
 

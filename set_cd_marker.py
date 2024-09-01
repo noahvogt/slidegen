@@ -74,7 +74,7 @@ def start_cd_recording() -> None:
         unix_milis = get_unix_milis()
 
         log(f"starting cd #{cd_num} recording...")
-        cmd = "ffmpeg -y {} -ar 44100 -t {} {}".format(
+        cmd = 'ffmpeg -y {} -ar 44100 -t {} "{}"'.format(
             const.CD_RECORD_FFMPEG_INPUT_ARGS,
             const.CD_RECORD_MAX_SECONDS,
             filename,
@@ -115,13 +115,6 @@ def start_cd_recording() -> None:
         cd_num += 1
         if process.returncode not in [255, 0]:
             mark_end_of_recording(cachefile_content)
-            app = QApplication
-            InfoMsgBox(
-                QMessageBox.Critical,
-                "Error",
-                f"ffmpeg terminated with exit code {process.returncode}",
-            )
-            del app
             sys.exit(1)
 
 

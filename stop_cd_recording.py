@@ -16,8 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from os import kill
-from signal import SIGTERM
 from time import sleep
 
 import colorama
@@ -37,6 +35,7 @@ from utils import (
 from input import get_cachefile_content, validate_cd_record_config
 import config as const
 from recording import is_valid_cd_record_checkfile, mark_end_of_recording
+from os_agnostic import kill_process
 
 
 def stop_cd_recording() -> None:
@@ -56,7 +55,7 @@ def stop_cd_recording() -> None:
             sleep(milis_diff / 1000 + 1)
 
         try:
-            kill(int(cachefile_content[2]), SIGTERM)
+            kill_process(int(cachefile_content[2]))
         except ProcessLookupError:
             app = QApplication
             InfoMsgBox(
