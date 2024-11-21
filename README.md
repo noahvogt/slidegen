@@ -343,16 +343,20 @@ which for example can look like this:
     2023-11-05
     3
 
-It then increments the value up to `OBS_MIN_SUBDIRS` and cycles back to 1. After each increment, it writes to the cachefile and by default sends a hotkey `Ctrl + Shift + F${value}` with the `$value` being the just incremented variable - which can be intercepted by OBS to change to the respecting scene for the song. You can change the hotkey prefix, but not the last part with the function keys, for example the configuration to use `Ctrl + Alt + F${value}` would be
+It then increments the value up to `OBS_MIN_SUBDIRS` and cycles back to 1. After each increment, it writes to the cachefile and switches to the respecting OBS Scene. With the configuration
 
 ```python
-OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX = ["ctrl", "alt"]
+OBS_SONG_SCENE_PREFIX = "Song "
 ```
 
-To transition to the new song, it sends another hotkey defined by the following default:
+it would switch to the OBS Scene "Song 1" for the first song, "Song 2" for the second etc.
+
+To connect to OBS, it uses a OBS Websocket Connection. Here an example configuration with an empty password:
 
 ```python
-OBS_TRANSITION_HOTKEY = ["ctrl", "shift", "f12"]
+OBS_WEBSOCKET_HOSTNAME = "localhost"
+OBS_WEBSOCKET_PORT = 4444
+OBS_WEBSOCKET_PASSWORD = ""
 ```
 
 ### previous_song.py
@@ -375,11 +379,10 @@ These are some issues and possible changes that will be addressed or at least co
 - add tests
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
 - add warnings that indicate potential problems with rclone syncing
-- Use obs websocket connection, cleaner that transition hotkeys. Also to deprecate pyautogui.
 - add (semantic) versioning, maybe even display on program run as text
 - add not-yet-public streaming workflow scripts
 - for sermon segment generating: Check if file duration and type roughly match the target to avoid useless regenerating. Also, parallelization.
-- make multiplatform ejecting of cd drives possible
+- make multiplatform ejecting of cd drives possible / fix win32 popup after ejecting
 - fix cd recording edge cases when:
     - a new day starts during the recording
     - changing timezone

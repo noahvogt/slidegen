@@ -1,7 +1,7 @@
 wand
 termcolor
 colorama
-pyautogui
+obsws_python
 PyQt5
 pycdio
 soundfile

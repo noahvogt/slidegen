@@ -16,9 +16,9 @@
 import os
 
 if os.name == "nt":
-    from signal import SIGTERM
-else:
     from subprocess import call
+else:
+    from signal import SIGTERM
 
 
 def kill_process(pid: int) -> None:

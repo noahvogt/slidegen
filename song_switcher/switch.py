@@ -29,7 +29,7 @@ from utils import (
 )
 from input import get_cachefile_content
 import config as const
-from .obs import safe_send_hotkey
+from .obs import change_to_song_scene
 
 
 class SongDirection(Enum):
@@ -61,14 +61,7 @@ def switch_to_song(song_number: int) -> None:
         song_number = 1
     if song_number < 1:
         song_number = const.OBS_MIN_SUBDIRS
-    log("sending hotkey to switch to scene {}".format(song_number), "cyan")
-    scene_switch_hotkey = list(const.OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX)
-    scene_switch_hotkey.append("f{}".format(song_number))
-    safe_send_hotkey(scene_switch_hotkey)
-
-    log("sending hotkey to transition to scene {}".format(song_number), "cyan")
-    safe_send_hotkey(const.OBS_TRANSITION_HOTKEY)
-
+    change_to_song_scene(song_number)
     create_cachfile_for_song(song_number)
 
 

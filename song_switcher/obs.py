@@ -14,14 +14,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from time import sleep
+import obsws_python as obs
 
-from pyautogui import keyDown, keyUp
+import config as const
 
 
-def safe_send_hotkey(hotkey: list, sleep_time=0.1) -> None:
-    for key in hotkey:
-        keyDown(key)
-    sleep(sleep_time)
-    for key in hotkey:
-        keyUp(key)
+def change_to_song_scene(song_number: int) -> None:
+    cl = obs.ReqClient(
+        host=const.OBS_WEBSOCKET_HOSTNAME,
+        port=const.OBS_WEBSOCKET_PORT,
+        password=const.OBS_WEBSOCKET_PASSWORD,
+        timeout=3,
+    )
+    cl.set_current_program_scene(f"{const.OBS_SONG_SCENE_PREFIX}{song_number}")
