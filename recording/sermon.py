@@ -233,6 +233,12 @@ class Preacher:
     name: str
 
 
+@dataclass
+class UploadedSermon:
+    title: str
+    remote_audiofile_url: str
+
+
 def get_preachers():
     try:
         response = requests.get(
@@ -311,7 +317,7 @@ def make_sermon_filename(sermon_name: str) -> str:
     return sermon_name + ".mp3"
 
 
-def upload_mp3_to_wordpress(filename: str) -> None:
+def upload_mp3_to_wordpress(filename: str) -> UploadedSermon:
     app = QApplication([])
     sermon_name, accepted_dialog = QInputDialog.getText(
         None,
@@ -348,13 +354,15 @@ def upload_mp3_to_wordpress(filename: str) -> None:
             )
             response.raise_for_status()
             data = response.json()
-            log(f"url of uploaded wordpress media: {data['guid']['rendered']}")
+            remote_audiofile_url = data["guid"]["rendered"]
+            log(f"url of uploaded wordpress media: {remote_audiofile_url}")
+            return UploadedSermon(sermon_name, remote_audiofile_url)
         except (
             requests.exceptions.RequestException,
-            # KeyError,
-            # FileNotFoundError,
-            # PermissionError,
-            # IOError,
+            KeyError,
+            FileNotFoundError,
+            PermissionError,
+            IOError,
         ) as e:
             InfoMsgBox(
                 QMessageBox.Critical,
@@ -426,15 +434,72 @@ def upload_sermon_to_ftp_server(audiofile: str) -> None:
         sys.exit(1)
 
 
+def create_wpsm_sermon(
+    uploaded_sermon: UploadedSermon,
+    unix_seconds: int,
+    preacher_id: int,
+) -> None:
+    try:
+        log(f"creating WPSM sermon '{uploaded_sermon.title}'...")
+
+        headers = {"Content-Type": "application/json"}
+        data = {
+            "title": uploaded_sermon.title,
+            "status": "publish",
+            "wpfc_preacher": preacher_id,
+            "sermon_date": unix_seconds,
+            "comment_status": "closed",
+            "sermon_audio": uploaded_sermon.remote_audiofile_url,
+        }
+        print(data)
+
+        response = requests.post(
+            const.SERMON_UPLOAD_WPSM_API_BASE_URL + "/wpfc_sermon",
+            headers=headers,
+            json=data,
+            auth=HTTPBasicAuth(
+                const.SERMON_UPLOAD_WPSM_USER,
+                const.SERMON_UPLOAD_WPSM_PASSWORD,
+            ),
+            timeout=const.HTTP_REQUEST_TIMEOUT_SECONDS,
+        )
+        print(response.status_code)
+        print(response.text)
+        response.raise_for_status()
+        data = response.json()
+    except (
+        requests.exceptions.RequestException,
+        KeyError,
+        FileNotFoundError,
+        PermissionError,
+        IOError,
+    ) as e:
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: Could not create sermon wordpress post for '{uploaded_sermon.title}'. Reason: {e}",
+        )
+        sys.exit(1)
+
+    InfoMsgBox(
+        QMessageBox.Information,
+        "Success",
+        f"Sermon '{uploaded_sermon.title}' uploaded successfully.",
+    )
+
+
 def upload_sermon_audiofile(audiofile: str, yyyy_mm_dd: str) -> None:
     if const.SERMON_UPLOAD_USE_FTP:
         upload_sermon_to_ftp_server(audiofile)
     else:
         dt = datetime.fromisoformat(yyyy_mm_dd).replace(tzinfo=timezone.utc)
-        # puts date to midnight of UTC
-        unix_seconds = int(dt.timestamp())
-        preacher = choose_preacher()
-        upload_mp3_to_wordpress(audiofile)
+
+        create_wpsm_sermon(
+            uploaded_sermon=upload_mp3_to_wordpress(audiofile),
+            # puts date to midnight of UTC
+            unix_seconds=int(dt.timestamp()),
+            preacher_id=choose_preacher().id,
+        )
 
 
 def upload_sermon_for_day(yyyy_mm_dd: str, choose_manually=False):
