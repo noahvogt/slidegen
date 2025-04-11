@@ -16,9 +16,13 @@
 import sys
 from os import path, listdir
 from shlex import split
-from re import match
+from re import match, sub
 from subprocess import Popen
 import ftplib
+from datetime import datetime, timezone
+from dataclasses import dataclass
+import requests
+from requests.auth import HTTPBasicAuth
 
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication,
@@ -27,7 +31,13 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QDialog,
 )
 
-from utils import CustomException, expand_dir, log, InfoMsgBox
+from utils import (
+    CustomException,
+    expand_dir,
+    log,
+    InfoMsgBox,
+    RadioButtonDialog,
+)
 from audio import (
     get_ffmpeg_timestamp_from_frame,
     SermonSegment,
@@ -90,7 +100,7 @@ def get_audio_base_path_from_segment(segment: SermonSegment) -> str:
 
 def make_sermon_mp3(source_audio: str, target_audio: str) -> None:
     log("Generating final mp3...")
-    cmd = "ffmpeg -y -i \"{}\" -acodec libmp3lame \"{}\"".format(
+    cmd = 'ffmpeg -y -i "{}" -acodec libmp3lame "{}"'.format(
         source_audio,
         target_audio,
     )
@@ -108,16 +118,16 @@ def make_sermon_mp3(source_audio: str, target_audio: str) -> None:
 
 def generate_wav_for_segment(segment: SermonSegment) -> None:
     cmd = (
-        f"ffmpeg -y -i \"{get_full_wav_path(segment)}\" -ss "
+        f'ffmpeg -y -i "{get_full_wav_path(segment)}" -ss '
         + f" {get_ffmpeg_timestamp_from_frame(segment.start_frame)} "
         + f"-to {get_ffmpeg_timestamp_from_frame(segment.end_frame)} "
-        + f"-acodec copy \"{get_audio_base_path_from_segment(segment)}.wav\""
+        + f'-acodec copy "{get_audio_base_path_from_segment(segment)}.wav"'
     )
     if segment.start_frame >= segment.end_frame:
         log("Empty segment detected, generating silent 1 sec wav in place...")
         cmd = (
             "ffmpeg -y -f lavfi -i anullsrc=r=11025:cl=mono -t 1 "
-            + f"\"{get_audio_base_path_from_segment(segment)}.wav\""
+            + f'"{get_audio_base_path_from_segment(segment)}.wav"'
         )
     process = Popen(split(cmd))
     _ = process.communicate()[0]  # wait for subprocess to end
@@ -217,7 +227,144 @@ def get_segments_with_suitable_time(
     return suitable_segments
 
 
-def upload_sermon_audiofile(audiofile: str) -> None:
+@dataclass
+class Preacher:
+    id: int
+    name: str
+
+
+def get_preachers():
+    try:
+        response = requests.get(
+            const.SERMON_UPLOAD_WPSM_API_BASE_URL + "/wpfc_preacher",
+            timeout=const.HTTP_REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        data = response.json()
+        preachers: list[Preacher] = []
+        for preacher in data:
+            preacher_id = int(preacher["id"])
+            # pylint: disable=invalid-name
+            name = str(preacher["name"])
+            preachers.append(Preacher(preacher_id, name))
+        if len(preachers) == 0:
+            raise CustomException("Not enough preachers")
+        return preachers
+    except CustomException as e:
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: Could not get preachers. Reason: {e}",
+        )
+        sys.exit(1)
+    except (
+        requests.exceptions.RequestException,
+        KeyError,
+        ValueError,
+    ) as e:
+        InfoMsgBox(
+            QMessageBox.Critical,
+            "Error",
+            f"Error: Could not get preachers. Reason: {type(e).__name__}",
+        )
+        sys.exit(1)
+
+
+def choose_preacher() -> Preacher:
+    preachers = get_preachers()
+    preacher_names = [preacher.name for preacher in preachers]
+    preacher_ids = [preacher.id for preacher in preachers]
+    app = QApplication([])
+    dialog = RadioButtonDialog(preacher_names, "Choose a Preacher")
+    if dialog.exec_() == QDialog.Accepted:
+        log(f"Dialog accepted: {dialog.chosen}")
+        return Preacher(
+            preacher_ids[preacher_names.index(dialog.chosen)], dialog.chosen
+        )
+    del app
+    InfoMsgBox(
+        QMessageBox.Critical,
+        "Error",
+        "Error: Sermon upload canceled as no preacher selected.",
+    )
+    sys.exit(1)
+
+
+def make_sermon_filename(sermon_name: str) -> str:
+    # Custom replacements for umlauts and ß
+    replacements = {
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "Ä": "Ae",
+        "Ö": "Oe",
+        "Ü": "Ue",
+        "ß": "ss",
+    }
+    for src, target in replacements.items():
+        sermon_name = sermon_name.replace(src, target)
+
+    sermon_name = sermon_name.replace(" ", "_")
+
+    sermon_name = sub(r"[^a-zA-Z0-9_-]", "", sermon_name)
+
+    return sermon_name + ".mp3"
+
+
+def upload_mp3_to_wordpress(filename: str) -> None:
+    app = QApplication([])
+    sermon_name, accepted_dialog = QInputDialog.getText(
+        None,
+        "Input Dialog",
+        "Enter the Name of the Sermon:",
+    )
+    del app
+
+    if not accepted_dialog:
+        sys.exit(0)
+
+    wanted_filename = make_sermon_filename(sermon_name)
+
+    mp3_final_path = path.join(path.split(filename)[0], wanted_filename)
+    make_sermon_mp3(filename, mp3_final_path)
+
+    headers = {
+        "Content-Disposition": f"attachment; filename={wanted_filename}",
+        "Content-Type": "audio/mpeg",
+    }
+
+    with open(mp3_final_path, "rb") as f:
+        try:
+            log(f"uploading f{mp3_final_path} to wordpress...")
+            response = requests.post(
+                const.SERMON_UPLOAD_WPSM_API_BASE_URL + "/media",
+                headers=headers,
+                data=f,
+                auth=HTTPBasicAuth(
+                    const.SERMON_UPLOAD_WPSM_USER,
+                    const.SERMON_UPLOAD_WPSM_PASSWORD,
+                ),
+                timeout=const.HTTP_REQUEST_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+            data = response.json()
+            log(f"url of uploaded wordpress media: {data['guid']['rendered']}")
+        except (
+            requests.exceptions.RequestException,
+            # KeyError,
+            # FileNotFoundError,
+            # PermissionError,
+            # IOError,
+        ) as e:
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
+                f"Error: Could not upload sermon to wordpress. Reason: {e}",
+            )
+            sys.exit(1)
+
+
+def upload_sermon_to_ftp_server(audiofile: str) -> None:
     try:
         ext = ".mp3"
         session = ftplib.FTP_TLS(
@@ -247,7 +394,9 @@ def upload_sermon_audiofile(audiofile: str) -> None:
             sys.exit(0)
         if wanted_filename in disallowed_filenames:
             InfoMsgBox(
-                QMessageBox.Critical, "Error", "Error: filename already exists."
+                QMessageBox.Critical,
+                "Error",
+                "Error: filename already exists.",
             )
             session.quit()
             sys.exit(1)
@@ -277,6 +426,17 @@ def upload_sermon_audiofile(audiofile: str) -> None:
         sys.exit(1)
 
 
+def upload_sermon_audiofile(audiofile: str, yyyy_mm_dd: str) -> None:
+    if const.SERMON_UPLOAD_USE_FTP:
+        upload_sermon_to_ftp_server(audiofile)
+    else:
+        dt = datetime.fromisoformat(yyyy_mm_dd).replace(tzinfo=timezone.utc)
+        # puts date to midnight of UTC
+        unix_seconds = int(dt.timestamp())
+        preacher = choose_preacher()
+        upload_mp3_to_wordpress(audiofile)
+
+
 def upload_sermon_for_day(yyyy_mm_dd: str, choose_manually=False):
     segments = get_possible_sermon_segments_of_day(yyyy_mm_dd)
     if not segments:
@@ -291,7 +451,8 @@ def upload_sermon_for_day(yyyy_mm_dd: str, choose_manually=False):
     if len(suitable_segments) == 1 and not choose_manually:
         generate_wav_for_segment(suitable_segments[0])
         upload_sermon_audiofile(
-            f"{get_audio_base_path_from_segment(suitable_segments[0])}.wav"
+            f"{get_audio_base_path_from_segment(suitable_segments[0])}.wav",
+            yyyy_mm_dd,
         )
     else:
         manually_choose_and_upload_segments(segments, yyyy_mm_dd)
@@ -323,7 +484,7 @@ def manually_choose_and_upload_segments(segments, yyyy_mm_dd):
         del app  # pyright: ignore
 
         merge_wave_files(target_dir, chosen_wave_paths)
-        upload_sermon_audiofile(path.join(target_dir, "merged.wav"))
+        upload_sermon_audiofile(path.join(target_dir, "merged.wav"), yyyy_mm_dd)
 
 
 def merge_wave_files(target_dir: str, wave_paths: list[str]) -> None:
@@ -353,7 +514,7 @@ def create_concat_file(file_path: str, wave_paths: list[str]) -> None:
 
 
 def merge_files_with_ffmpeg(concat_file_path, target_dir) -> None:
-    cmd = "ffmpeg -y -f concat -safe 0 -i \"{}\" -acodec copy \"{}\"".format(
+    cmd = 'ffmpeg -y -f concat -safe 0 -i "{}" -acodec copy "{}"'.format(
         concat_file_path,
         path.join(target_dir, "merged.wav"),
     )
