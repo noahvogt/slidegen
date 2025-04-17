@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
 )
 
 from utils import (
-    get_yyyy_mm_dd_date,
+    get_current_yyyy_mm_dd_date,
     make_sure_file_exists,
     get_unix_milis,
     warn,
@@ -41,7 +41,7 @@ from os_agnostic import kill_process
 def stop_cd_recording() -> None:
     filename = expand_dir(const.CD_RECORD_CACHEFILE)
     cachefile_content = get_cachefile_content(filename)
-    yyyy_mm_dd = get_yyyy_mm_dd_date()
+    yyyy_mm_dd = get_current_yyyy_mm_dd_date()
 
     if is_valid_cd_record_checkfile(cachefile_content, yyyy_mm_dd):
         unix_milis = get_unix_milis()

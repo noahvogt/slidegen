@@ -389,7 +389,6 @@ These are some issues and possible changes that will be addressed or at least co
     - changing time
 - sermon uploading
     - add docs for new config variables and explain difference between uploading systems
-    - maybe add manual file uploading option via a gui file picker
 
 ## Licensing
 

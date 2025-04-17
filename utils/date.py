@@ -17,7 +17,7 @@ from datetime import date
 from time import time
 
 
-def get_yyyy_mm_dd_date() -> str:
+def get_current_yyyy_mm_dd_date() -> str:
     return date.strftime(date.today(), "%Y-%m-%d")
 
 

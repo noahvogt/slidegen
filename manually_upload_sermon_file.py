@@ -17,20 +17,32 @@
 
 import colorama
 
+from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
+    QApplication,
+)
+
 from utils import (
-    get_current_yyyy_mm_dd_date,
+    log,
+    DatePickerDialog,
+    get_mp3_file_via_picker_dialog,
 )
-from recording import (
-    make_sure_there_is_no_ongoing_cd_recording,
-    upload_sermon_for_day,
-)
-from input import (
-    validate_sermon_upload_config,
-)
+from recording import upload_sermon_audiofile
+from input import validate_manual_filedrop_sermon_upload_config
 
 
 if __name__ == "__main__":
     colorama.init()
-    validate_sermon_upload_config()
-    make_sure_there_is_no_ongoing_cd_recording()
-    upload_sermon_for_day(get_current_yyyy_mm_dd_date())
+    validate_manual_filedrop_sermon_upload_config()
+
+    app = QApplication([])
+    dialog = DatePickerDialog()
+    if dialog.exec_():
+        date = dialog.selected_date()
+        yyyy_mm_dd = date.toString("yyyy-MM-dd")
+        log("Selected date: {}".format(yyyy_mm_dd))
+        file_path = get_mp3_file_via_picker_dialog()
+        if file_path:
+            del app
+            upload_sermon_audiofile(file_path, yyyy_mm_dd)
+        else:
+            log("No file selected.")

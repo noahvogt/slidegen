@@ -17,9 +17,9 @@
 
 import colorama
 
-from utils import get_yyyy_mm_dd_date
+from utils import get_current_yyyy_mm_dd_date
 from recording import burn_cds_of_day
 
 if __name__ == "__main__":
     colorama.init()
-    burn_cds_of_day(get_yyyy_mm_dd_date())
+    burn_cds_of_day(get_current_yyyy_mm_dd_date())

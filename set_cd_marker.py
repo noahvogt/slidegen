@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
 )
 
 from utils import (
-    get_yyyy_mm_dd_date,
+    get_current_yyyy_mm_dd_date,
     make_sure_file_exists,
     get_unix_milis,
     log,
@@ -59,7 +59,7 @@ def get_reset_marker(yyyy_mm_dd: str) -> int:
 
 def start_cd_recording() -> None:
     cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
-    yyyy_mm_dd = get_yyyy_mm_dd_date()
+    yyyy_mm_dd = get_current_yyyy_mm_dd_date()
     cd_num = get_reset_marker(yyyy_mm_dd)
 
     ensure_output_dir_exists(yyyy_mm_dd)
@@ -276,7 +276,7 @@ def update_cue_sheet(
 
 def set_cd_marker() -> None:
     cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
-    yyyy_mm_dd = get_yyyy_mm_dd_date()
+    yyyy_mm_dd = get_current_yyyy_mm_dd_date()
     unix_milis = get_unix_milis()
     cachefile_and_time_data = (cachefile_content, yyyy_mm_dd, unix_milis)
 

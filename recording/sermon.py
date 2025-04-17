@@ -16,6 +16,7 @@
 import sys
 from os import path, listdir
 from shlex import split
+from shutil import copyfile
 from re import match, sub
 from subprocess import Popen
 import ftplib
@@ -99,6 +100,22 @@ def get_audio_base_path_from_segment(segment: SermonSegment) -> str:
 
 
 def make_sermon_mp3(source_audio: str, target_audio: str) -> None:
+    _, extension = path.splitext(source_audio)
+    if extension == ".mp3":
+        log("Copying source mp3 to final destination...")
+        try:
+            copyfile(source_audio, target_audio)
+        except (FileNotFoundError, PermissionError, IOError) as error:
+            app = QApplication([])
+            InfoMsgBox(
+                QMessageBox.Critical,
+                "Error",
+                f"could not move '{source_audio}'to '{target_audio}'",
+            )
+            del app
+            sys.exit(1)
+        return
+
     log("Generating final mp3...")
     cmd = 'ffmpeg -y -i "{}" -acodec libmp3lame "{}"'.format(
         source_audio,
@@ -114,6 +131,7 @@ def make_sermon_mp3(source_audio: str, target_audio: str) -> None:
             "ffmpeg terminated with " + f"exit code {process.returncode}",
         )
         del app
+        sys.exit(1)
 
 
 def generate_wav_for_segment(segment: SermonSegment) -> None:
@@ -341,7 +359,7 @@ def upload_mp3_to_wordpress(filename: str) -> UploadedSermon:
 
     with open(mp3_final_path, "rb") as f:
         try:
-            log(f"uploading f{mp3_final_path} to wordpress...")
+            log(f"uploading {mp3_final_path} to wordpress...")
             response = requests.post(
                 const.SERMON_UPLOAD_WPSM_API_BASE_URL + "/media",
                 headers=headers,

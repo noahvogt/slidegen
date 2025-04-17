@@ -22,7 +22,11 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QButtonGroup,
     QScrollArea,
     QWidget,
+    QCalendarWidget,
+    QFileDialog,
 )
+
+from PyQt5.QtCore import QDate  # pylint: disable=no-name-in-module
 
 
 class RadioButtonDialog(QDialog):  # pylint: disable=too-few-public-methods
@@ -69,3 +73,40 @@ class RadioButtonDialog(QDialog):  # pylint: disable=too-few-public-methods
                 "No Selection",
                 "Please select an option before proceeding.",
             )
+
+
+class DatePickerDialog(QDialog):  # pylint: disable=too-few-public-methods
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select a Date")
+        self.setMinimumWidth(300)
+
+        # Layout
+        layout = QVBoxLayout()
+
+        # Calendar widget
+        self.calendar = QCalendarWidget(self)
+        self.calendar.setGridVisible(True)
+        self.calendar.setSelectedDate(QDate.currentDate())
+        layout.addWidget(self.calendar)
+
+        # OK button
+        self.ok_button = QPushButton("OK", self)
+        self.ok_button.clicked.connect(self.accept)
+        layout.addWidget(self.ok_button)
+
+        self.setLayout(layout)
+
+    def selected_date(self):
+        return self.calendar.selectedDate()
+
+
+def get_mp3_file_via_picker_dialog(parent=None) -> str | None:
+    dialog = QFileDialog(parent)
+    dialog.setFileMode(QFileDialog.ExistingFile)
+    dialog.setNameFilter("MP3 Files (*.mp3)")
+    if dialog.exec_():
+        selected_files = dialog.selectedFiles()
+        # Return the first selected file
+        return selected_files[0]
+    return None

@@ -16,6 +16,7 @@
 from .sermon import (
     make_sermon_mp3,
     upload_sermon_for_day,
+    upload_sermon_audiofile,
 )
 from .verify import (
     is_valid_cd_record_checkfile,

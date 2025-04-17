@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
 from psutil import pid_exists
 
 import config as const
-from utils import get_yyyy_mm_dd_date, InfoMsgBox, expand_dir
+from utils import get_current_yyyy_mm_dd_date, InfoMsgBox, expand_dir
 from input import get_cachefile_content
 
 
@@ -64,7 +64,7 @@ def ongoing_cd_recording_detected() -> bool:
     if path.isfile(expand_dir(const.CD_RECORD_CACHEFILE)):
         cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
         if is_valid_cd_record_checkfile(
-            cachefile_content, get_yyyy_mm_dd_date()
+            cachefile_content, get_current_yyyy_mm_dd_date()
         ):
             if cachefile_content[1].strip() != "9001" and pid_exists(
                 int(cachefile_content[2].strip())

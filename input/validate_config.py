@@ -68,9 +68,7 @@ def validate_cd_record_config() -> None:
     general_config_validator(needed_constants, gui_error_out=True)
 
 
-def validate_sermon_upload_config() -> None:
-    validate_cd_burn_config()
-
+def validate_manual_filedrop_sermon_upload_config() -> None:
     needed_constants: dict = {
         "SERMON_UPLOAD_USE_FTP": const.SERMON_UPLOAD_USE_FTP,
         "SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES": const.SERMON_UPLOAD_SUITABLE_SEGMENT_FRAMES,
@@ -92,6 +90,11 @@ def validate_sermon_upload_config() -> None:
             "SERMON_UPLOAD_WPSM_PASSWORD": const.SERMON_UPLOAD_WPSM_PASSWORD,
         }
         general_config_validator(needed_constants, gui_error_out=True)
+
+
+def validate_sermon_upload_config() -> None:
+    validate_cd_burn_config()
+    validate_manual_filedrop_sermon_upload_config()
 
 
 def general_config_validator(

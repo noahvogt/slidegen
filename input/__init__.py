@@ -30,5 +30,6 @@ from .validate_config import (
     validate_cd_record_config,
     validate_sermon_upload_config,
     validate_cd_burn_config,
+    validate_manual_filedrop_sermon_upload_config,
 )
 from .slide_selection_iterator import slide_selection_iterator

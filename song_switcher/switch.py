@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
 )
 from utils import (
     log,
-    get_yyyy_mm_dd_date,
+    get_current_yyyy_mm_dd_date,
     expand_dir,
     InfoMsgBox,
 )
@@ -49,7 +49,7 @@ def cycle_to_song_direction(song_direction: SongDirection):
             and match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}$", cachefile_content[0])
             and match(r"^[0-9]+$", cachefile_content[1])
         )
-        or cachefile_content[0].strip() != get_yyyy_mm_dd_date()
+        or cachefile_content[0].strip() != get_current_yyyy_mm_dd_date()
     ):
         switch_to_song(1)
     else:
@@ -70,7 +70,7 @@ def create_cachfile_for_song(song) -> None:
     cachefile = expand_dir(const.NEXTSONG_CACHE_FILE)
     try:
         with open(cachefile, mode="w", encoding="utf-8-sig") as file_writer:
-            file_writer.write(get_yyyy_mm_dd_date() + "\n")
+            file_writer.write(get_current_yyyy_mm_dd_date() + "\n")
             file_writer.write(str(song) + "\n")
     except (FileNotFoundError, PermissionError, IOError) as error:
         app = QApplication
