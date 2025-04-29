@@ -14,4 +14,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CD_RECORD_FILENAME_ZFILL = 7
-HTTP_REQUEST_TIMEOUT_SECONDS = 3
+HTTP_REQUEST_TIMEOUT_SECONDS = 7
