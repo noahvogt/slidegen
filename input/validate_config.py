@@ -43,8 +43,18 @@ def validate_obs_song_scene_switcher_config() -> None:
     needed_constants: dict = {
         "NEXTSONG_CACHE_FILE": const.NEXTSONG_CACHE_FILE,
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
-        "OBS_TRANSITION_HOTKEY": const.OBS_TRANSITION_HOTKEY,
-        "OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX": const.OBS_SWITCH_TO_SCENE_HOTKEY_PREFIX,
+        "OBS_WEBSOCKET_HOSTNAME": const.OBS_WEBSOCKET_HOSTNAME,
+        "OBS_WEBSOCKET_PORT": const.OBS_WEBSOCKET_PORT,
+        "OBS_WEBSOCKET_PASSWORD": const.OBS_WEBSOCKET_PASSWORD,
+        "OBS_SONG_SCENE_PREFIX": const.OBS_SONG_SCENE_PREFIX,
+    }
+    general_config_validator(needed_constants, gui_error_out=True)
+
+
+def validate_autoprint_infomail_config() -> None:
+    needed_constants: dict = {
+        "AUTOPRINT_INFOMAIL_CMD": const.AUTOPRINT_INFOMAIL_CMD,
+        "AUTOPRINT_INFOMAIL_DATEFILE": const.AUTOPRINT_INFOMAIL_DATEFILE,
     }
     general_config_validator(needed_constants, gui_error_out=True)
 
