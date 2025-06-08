@@ -41,8 +41,6 @@ PLAYER_HEIGHT = 315
 
 BOLD_FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
 FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
-FONT = "Century-Gothic"
-BOLD_FONT = "Century-Gothic-Bold"
 
 METADATA_FONT_SIZE = 36
 METADATA_X = 70

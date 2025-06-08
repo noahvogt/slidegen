@@ -103,7 +103,7 @@ class ClassicSongSlide(SongSlide):
                 draw.fill_color = Color(const.TEXT_COLOR)
                 draw.text_interline_spacing = const.INTERLINE_SPACING
                 draw.font_size = font_size
-                draw.font = const.FONT
+                draw.font = const.FONT_PATH
                 draw.text(0, font_size, slide_text)
                 with Image(
                     width=const.WIDTH,
@@ -125,16 +125,16 @@ class ClassicSongSlide(SongSlide):
         with Drawing() as draw:
             draw.fill_color = Color(const.TEXT_COLOR)
             draw.font_size = const.INFODISPLAY_FONT_SIZE
-            draw.font = const.FONT
+            draw.font = const.FONT_PATH
             for current_index, item in enumerate(structure):
                 if current_index == index:
-                    draw.font = const.BOLD_FONT
+                    draw.font = const.BOLD_FONT_PATH
                     draw.text(
                         current_index * const.INFODISPLAY_ITEM_WIDTH,
                         const.INFODISPLAY_FONT_SIZE,
                         item,
                     )
-                    draw.font = const.FONT
+                    draw.font = const.FONT_PATH
                 else:
                     draw.text(
                         current_index * const.INFODISPLAY_ITEM_WIDTH,

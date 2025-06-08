@@ -190,16 +190,14 @@ This is so that when the text width on maximum font size collides with the playe
 
 #### Font Configuration
 
-Slidegen uses two font styles, *normal* and *bold*. `BOLD_FONT_PATH` should point the respecting ttf/otf file for the bold style font and `FONT_PATH` for the normal style font. `FONT` and `BOLD_FONT` should be defined as the name of the font as accepted by ImageMagick. This is as some submodules for ImageMagick - or at least their wand python bindings - cannot reliably convert between name and path of the font and has sometimes problems accessing the system font config. Hence we use these four variables. The default config
+Slidegen uses two font styles, *normal* and *bold*. `BOLD_FONT_PATH` should point the respecting ttf/otf file for the bold style font and `FONT_PATH` for the normal style font. The default config
 
 ```python
 BOLD_FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
 FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
-FONT = "Century-Gothic"
-BOLD_FONT = "Century-Gothic-Bold"
 ```
 
-is made to use the [ttf-century-gothic](https://aur.archlinux.org/packages/ttf-century-gothic) font on the AUR on Arch Linux (-based distros). For different operating systems you may need to use another naming convention for `FONT` and `FONT_BOLD` like using spaces instead of dashes, but check out the ImageMagick documentation for more details.
+is made to use the [ttf-century-gothic](https://aur.archlinux.org/packages/ttf-century-gothic) font on the AUR on Arch Linux (-based distros).
 
 #### Metadata
 
