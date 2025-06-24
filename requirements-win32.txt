@@ -1,4 +1,5 @@
 wand
+requests
 termcolor
 colorama
 obsws_python
