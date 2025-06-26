@@ -45,7 +45,6 @@ def validate_obs_song_scene_switcher_config() -> None:
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
         "OBS_WEBSOCKET_HOSTNAME": const.OBS_WEBSOCKET_HOSTNAME,
         "OBS_WEBSOCKET_PORT": const.OBS_WEBSOCKET_PORT,
-        "OBS_WEBSOCKET_PASSWORD": const.OBS_WEBSOCKET_PASSWORD,
         "OBS_SONG_SCENE_PREFIX": const.OBS_SONG_SCENE_PREFIX,
     }
     general_config_validator(needed_constants, gui_error_out=True)
