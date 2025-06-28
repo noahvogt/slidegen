@@ -60,21 +60,21 @@ def is_valid_cd_record_checkfile(
     )
 
 
-def ongoing_cd_recording_detected() -> bool:
-    if path.isfile(expand_dir(const.CD_RECORD_CACHEFILE)):
-        cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
-        if is_valid_cd_record_checkfile(
-            cachefile_content, get_current_yyyy_mm_dd_date()
+def ongoing_cd_recording_detected(cachefile_content: list) -> bool:
+    if is_valid_cd_record_checkfile(
+        cachefile_content, get_current_yyyy_mm_dd_date()
+    ):
+        if cachefile_content[1].strip() != "9001" and pid_exists(
+            int(cachefile_content[2].strip())
         ):
-            if cachefile_content[1].strip() != "9001" and pid_exists(
-                int(cachefile_content[2].strip())
-            ):
-                return True
+            return True
     return False
 
 
 def make_sure_there_is_no_ongoing_cd_recording() -> None:
-    if ongoing_cd_recording_detected():
+    if ongoing_cd_recording_detected(
+        get_cachefile_content(const.CD_RECORD_CACHEFILE)
+    ):
         InfoMsgBox(
             QMessageBox.Critical,
             "Error",

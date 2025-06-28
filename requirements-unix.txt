@@ -8,3 +8,4 @@ pycdio
 soundfile
 Flask
 psutil
+websockets

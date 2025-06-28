@@ -24,6 +24,10 @@ from .verify import ongoing_cd_recording_detected, calc_cuesheet_timestamp
 cd_recording_status_webserver = Flask(__name__)
 
 
+def get_is_recording_active(cachefile_content: list) -> bool:
+    return ongoing_cd_recording_detected(cachefile_content)
+
+
 def get_cd_marker_count(active_recording: bool, cachefile_content: list) -> int:
     if not active_recording:
         return 0
@@ -58,10 +62,10 @@ def get_track_rec_time(active_recording: bool, cachefile_content: list) -> str:
 
 @cd_recording_status_webserver.route("/")
 def index():
-    recording_active = ongoing_cd_recording_detected()
     cachefile_content = get_cachefile_content(
         const.CD_RECORD_CACHEFILE, suppress_error=True
     )
+    recording_active = get_is_recording_active(cachefile_content)
     cd_marker_count = get_cd_marker_count(recording_active, cachefile_content)
     cd_count = get_cd_count(recording_active, cachefile_content)
     cd_rec_time = get_full_rec_time(recording_active, cachefile_content)

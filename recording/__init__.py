@@ -26,4 +26,11 @@ from .verify import (
 )
 from .cd import mark_end_of_recording, burn_cds_of_day
 from .gui import choose_sermon_day, choose_cd_day
-from .status_display import cd_recording_status_webserver
+from .status_display import (
+    cd_recording_status_webserver,
+    get_is_recording_active,
+    get_cd_count,
+    get_cd_marker_count,
+    get_track_rec_time,
+    get_full_rec_time,
+)
