@@ -47,7 +47,7 @@ async def status_sender(websocket):
                 status = {
                     "recording": is_recording_active,
                     "cd": get_cd_count(is_recording_active, cachefile_content),
-                    "track": get_cd_count(
+                    "track": get_cd_marker_count(
                         is_recording_active, cachefile_content
                     ),
                     "cd_time": get_full_rec_time(
