@@ -280,10 +280,9 @@ def set_cd_marker() -> None:
     unix_milis = get_unix_milis()
     cachefile_and_time_data = (cachefile_content, yyyy_mm_dd, unix_milis)
 
-    if (
-        is_valid_cd_record_checkfile(*cachefile_and_time_data[:-1])
-        and ongoing_cd_recording_detected()
-    ):
+    if is_valid_cd_record_checkfile(
+        *cachefile_and_time_data[:-1]
+    ) and ongoing_cd_recording_detected(cachefile_content):
         create_cachefile_for_marker(*cachefile_and_time_data)
         update_cue_sheet(*cachefile_and_time_data)
     else:
