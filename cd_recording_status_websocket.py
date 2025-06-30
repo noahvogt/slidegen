@@ -4,7 +4,6 @@ import asyncio
 import json
 from os import path
 
-import time
 import websockets
 
 from utils import expand_dir, get_current_yyyy_mm_dd_date, log
@@ -18,12 +17,6 @@ from recording import (
     get_full_rec_time,
     get_track_rec_time,
 )
-
-# Simulated CD status (you can replace this with real logic)
-cd_number = 3
-track_number = 7
-start_time = time.time()
-track_start = time.time() - 37  # Simulate track started 37s ago
 
 
 def get_inactive_recording_status() -> dict:
@@ -62,7 +55,7 @@ async def status_sender(websocket):
         else:
             status = get_inactive_recording_status()
         await websocket.send(json.dumps(status))
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(const.CD_RECORD_WEBSOCKET_SLEEP)
 
 
 async def handler(websocket):
@@ -74,8 +67,13 @@ async def handler(websocket):
 
 
 async def main():
-    log("Starting CD Rec status WebSocket server on ws://localhost:8765")
-    async with websockets.serve(handler, "localhost", 8765):
+    log(
+        "Starting CD Rec status WebSocket server on ws://"
+        + f"{const.CD_RECORD_WEBSOCKET_HOST}:{const.CD_RECORD_WEBSOCKET_PORT}"
+    )
+    async with websockets.serve(
+        handler, const.CD_RECORD_WEBSOCKET_HOST, const.CD_RECORD_WEBSOCKET_PORT
+    ):
         await asyncio.Future()  # Run forever
 
 
