@@ -14,7 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from threading import Thread
-from os import path
+from os import path, utime
+from pathlib import Path
+from re import compile
+import datetime
 
 from wand.exceptions import BlobError
 
@@ -24,6 +27,32 @@ from utils import (
 )
 
 import config as const
+
+
+def fix_timestamps(slidegen):
+    log("fixing timestamps...")
+
+    folder = Path(slidegen.output_dir).resolve()
+
+    pattern = compile(rf"{const.FILE_NAMEING}(\d+)\.jpg$")
+
+    slides = []
+    for f in folder.iterdir():
+        m = pattern.match(f.name)
+        if m:
+            num = int(m.group(1))
+            slides.append((num, f))
+
+    slides.sort(key=lambda x: x[0])
+
+    base_date = datetime.date(2000, 1, 1)
+
+    for i, (num, file_path) in enumerate(slides, start=1):
+        new_date = base_date + datetime.timedelta(days=i - 1)
+        new_dt = datetime.datetime.combine(new_date, datetime.time(12, 0, 0))
+        ts = new_dt.timestamp()
+
+        utime(file_path, (ts, ts))
 
 
 def generate_slides(
@@ -116,9 +145,9 @@ def generate_slides(
     for thread in threads:
         thread.start()
 
-    if disable_async:
-        for thread in threads:
-            thread.join()
+    for thread in threads:
+        thread.join()
+    fix_timestamps(slidegen)
 
 
 def generate_start_slide(slidegen, template_img, zfill_length, disable_async):
