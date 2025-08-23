@@ -37,7 +37,7 @@ def fix_timestamps(slidegen):
 
     folder = Path(slidegen.output_dir).resolve()
 
-    pattern = compile(rf"{const.FILE_NAMEING}(\d+)\.jpg$")
+    pattern = compile(rf"{const.FILE_NAMING}(\d+)\.jpg$")
 
     slides = []
     for f in folder.iterdir():
@@ -60,7 +60,7 @@ def fix_timestamps(slidegen):
 
 def generate_slides(
     slidegen, slide_count, template_img, zfill_length, disable_async: bool
-) -> None:
+) -> list[Thread]:
     log("generating song slides...")
 
     current_slide_index: int = 0
@@ -148,6 +148,8 @@ def generate_slides(
     for thread in threads:
         thread.start()
 
+    return threads
+
 
 def generate_start_slide(slidegen, template_img, zfill_length, disable_async):
     first_slide = slidegen.slide_style.start_slide_form()
@@ -162,7 +164,7 @@ def generate_start_slide(slidegen, template_img, zfill_length, disable_async):
         start_slide_img.save(
             filename=path.join(
                 slidegen.output_dir,
-                const.FILE_NAMEING
+                const.FILE_NAMING
                 + "1".zfill(zfill_length)
                 + "."
                 + const.FILE_EXTENSION,
@@ -201,7 +203,7 @@ def generate_song_slide(
         song_slide_img.save(
             filename=path.join(
                 slidegen.output_dir,
-                const.FILE_NAMEING
+                const.FILE_NAMING
                 + str(current_slide_index + 1).zfill(zfill_length)
                 + "."
                 + const.FILE_EXTENSION,

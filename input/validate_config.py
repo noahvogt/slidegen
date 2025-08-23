@@ -35,6 +35,9 @@ def validate_ssync_config() -> None:
         "OBS_SUBDIR_NAMING": const.OBS_SUBDIR_NAMING,
         "OBS_MIN_SUBDIRS": const.OBS_MIN_SUBDIRS,
         "SSYNC_CHOSEN_FILE_NAMING": const.SSYNC_CHOSEN_FILE_NAMING,
+        "SSYNC_SLIDESHOW_INPUT_NAMING": const.SSYNC_SLIDESHOW_INPUT_NAMING,
+        "OBS_WEBSOCKET_HOSTNAME": const.OBS_WEBSOCKET_HOSTNAME,
+        "OBS_WEBSOCKET_PORT": const.OBS_WEBSOCKET_PORT,
     }
     general_config_validator(needed_constants)
 

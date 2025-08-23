@@ -14,6 +14,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from threading import Thread
+from pathlib import Path
+import contextlib
+import io
+import re
+
+import obsws_python as obs
 
 from utils import (
     log,
@@ -40,6 +47,7 @@ def slide_selection_iterator(
     rclone_local_dir = expand_dir(const.RCLONE_LOCAL_DIR)
 
     song_counter = 0
+    threads = []
     while True:
         song_counter += 1
         input_prompt_prefix = "[{}{}] ".format(
@@ -91,17 +99,101 @@ def slide_selection_iterator(
                 )
             )
 
-            generate_slides_for_selected_song(
-                slide_style,
-                src_dir,
-                dest_dir,
-                generate_final_prompt(
-                    structure_prompt_answer, full_song_structure
-                ),
-                disable_async_enabled,
+            threads.extend(
+                generate_slides_for_selected_song(
+                    slide_style,
+                    src_dir,
+                    dest_dir,
+                    generate_final_prompt(
+                        structure_prompt_answer, full_song_structure
+                    ),
+                    disable_async_enabled,
+                )
             )
 
+    log("waiting for subprocesses to finish ...")
+    for thread in threads:
+        if thread.is_alive():
+            thread.join()
+    log("subprocesses finished.")
+
     remove_chosenfile()
+    add_slides_to_obs_slideshow_inputs()
+
+
+def add_slides_to_obs_slideshow_inputs():
+    pattern = re.compile(rf"{const.FILE_NAMING}(\d+)\.jpg$", re.IGNORECASE)
+
+    folders = []
+    for i in range(1, const.OBS_MIN_SUBDIRS + 1):
+        folders.append(
+            Path(const.OBS_SLIDES_DIR).joinpath(
+                Path(f"{const.OBS_SUBDIR_NAMING}{i}")
+            )
+        )
+    for folder in folders:
+        slides = []
+        for p in folder.iterdir():
+            m = pattern.match(p.name)
+            if m:
+                slides.append((int(m.group(1)), str(p.resolve())))
+        slides.sort(key=lambda x: x[0])
+        ordered_files = [{"value": path} for _, path in slides]
+
+        while True:
+            try:
+                # suppress stderr from obsws_python internals
+                with contextlib.redirect_stderr(io.StringIO()):
+                    cl = obs.ReqClient(
+                        host=const.OBS_WEBSOCKET_HOSTNAME,
+                        port=const.OBS_WEBSOCKET_PORT,
+                        password=const.OBS_WEBSOCKET_PASSWORD,
+                    )
+                source = (
+                    f"{const.SSYNC_SLIDESHOW_INPUT_NAMING}"
+                    + f"{str(folder.name)[len(const.OBS_SUBDIR_NAMING) :]}"
+                )
+
+                try:
+                    with contextlib.redirect_stderr(io.StringIO()):
+                        current_settings = cl.get_input_settings(
+                            source
+                        ).input_settings  # type: ignore
+
+                        new_settings = dict(current_settings)
+                        new_settings["files"] = ordered_files
+
+                        cl.set_input_settings(
+                            name=source,
+                            settings=new_settings,
+                            overlay=False,
+                        )
+
+                    log(f"{len(ordered_files)} slides put in " + f"'{source}'.")
+
+                    break
+
+                except obs.error.OBSSDKRequestError:  # type: ignore
+                    log(
+                        message=str(
+                            f"Error: Cannot access slideshow input: '{source}' "
+                            + "Please add to OBS and press enter to try again: "
+                        ),
+                        color="red",
+                        end="",
+                    )
+                    input()
+
+            except (ConnectionError, obs.error.OBSSDKError):  # type: ignore
+                log(
+                    message=str(
+                        "Error: Cannot connect to OBS Websocket. Please start OBS "
+                        + "and press enter to try again: "
+                    ),
+                    color="red",
+                    end="",
+                )
+                input()
 
 
 def generate_slides_for_selected_song(
@@ -110,14 +202,14 @@ def generate_slides_for_selected_song(
     dest_dir: str,
     calculated_prompt: str | list[str],
     disable_async_enabled: bool,
-) -> None:
+) -> list[Thread]:
     executing_slidegen_instance = slidegen.Slidegen(
         classic_slide_style,
         src_dir,
         dest_dir,
         calculated_prompt,
     )
-    executing_slidegen_instance.execute(disable_async_enabled)
+    return executing_slidegen_instance.execute(disable_async_enabled)
 
 
 def get_structure_for_prompt(classic_slide_style, src_dir, dest_dir):

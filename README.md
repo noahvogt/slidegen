@@ -115,12 +115,12 @@ Now for explanation of the individual entries.
 
 #### File Format and Naming
 
-`IMAGE_FORMAT` forces a specific file format when writing the files in formats accepted by ImageMagick. The individual slides get named in this form: `${FILE_NAMEING}${SLIDE_NUMBER}${FILE_EXTENSION}`. Hence with the default config of
+`IMAGE_FORMAT` forces a specific file format when writing the files in formats accepted by ImageMagick. The individual slides get named in this form: `${FILE_NAMING}${SLIDE_NUMBER}${FILE_EXTENSION}`. Hence with the default config of
 
 ```python
 IMAGE_FORMAT = "jpeg"
 FILE_EXTENSION = "jpg"
-FILE_NAMEING = "slide-"
+FILE_NAMING = "slide-"
 ```
 
 the slides would be named `slide-1.jpg`, `slide-2.jpg`, `slide-3.jpg` etc.

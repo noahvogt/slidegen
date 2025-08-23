@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from threading import Thread
+
 import colorama
 
 from wand.image import Image
@@ -53,10 +55,10 @@ class Slidegen:
         self.chosen_structure = chosen_structure
         self.slide_style: SlideStyle = slide_style
 
-    def execute(self, disable_async=False) -> None:
+    def execute(self, disable_async=False) -> list[Thread]:
         self.parse_file()
         self.calculate_desired_structures()
-        self.generate_slides(disable_async)
+        return self.generate_slides(disable_async)
 
     def parse_file(self):
         parse_metadata(self)
@@ -65,13 +67,13 @@ class Slidegen:
     def calculate_desired_structures(self) -> None:
         self.chosen_structure = parse_prompt_input(self)
 
-    def generate_slides(self, disable_async: bool) -> None:
+    def generate_slides(self, disable_async: bool) -> list[Thread]:
         template_img: Image = generate_song_template(self)
 
         slide_count: int = count_number_of_slides_to_be_generated(self)
         zfill_length: int = len(str(slide_count))
 
-        generate_slides(
+        return generate_slides(
             self, slide_count, template_img, zfill_length, disable_async
         )
 

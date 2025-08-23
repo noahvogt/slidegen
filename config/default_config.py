@@ -15,7 +15,7 @@
 
 IMAGE_FORMAT = "jpeg"
 FILE_EXTENSION = "jpg"
-FILE_NAMEING = "slide-"
+FILE_NAMING = "slide-"
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -81,6 +81,7 @@ SSYNC_CACHE_DIR = ""
 SSYNC_CHECKFILE_NAMING = "slidegen-checkfile.txt"
 SSYNC_CACHEFILE_NAMING = "slidegen-cachefile.txt"
 SSYNC_CHOSEN_FILE_NAMING = "chosen-file.txt"
+SSYNC_SLIDESHOW_INPUT_NAMING = "Songslides "
 
 OBS_SLIDES_DIR = ""
 OBS_SUBDIR_NAMING = ""

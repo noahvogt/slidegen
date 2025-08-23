@@ -50,8 +50,8 @@ def warn(message: str) -> None:
     print(colored("[*] Warning: {}".format(message), "yellow"))
 
 
-def log(message: str, color="green") -> None:
-    print(colored("[*] {}".format(message), color))  # pyright: ignore
+def log(message: str, color="green", end="\n") -> None:
+    print(colored("[*] {}".format(message), color), end=end)  # pyright: ignore
 
 
 class CustomException(Exception):
