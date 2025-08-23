@@ -29,6 +29,9 @@ from utils import (
 import config as const
 
 
+# used in attempt to get a correct ordering as obs image slide shows ignores
+# filenames, but it appearently also ignores a/m-times as seen in
+# https://github.com/obsproject/obs-studio/issues/10382
 def fix_timestamps(slidegen):
     log("fixing timestamps...")
 
@@ -144,10 +147,6 @@ def generate_slides(
 
     for thread in threads:
         thread.start()
-
-    for thread in threads:
-        thread.join()
-    fix_timestamps(slidegen)
 
 
 def generate_start_slide(slidegen, template_img, zfill_length, disable_async):
