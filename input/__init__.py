@@ -1,4 +1,4 @@
-# Copyright © 2024 Noah Vogt <noah@noahvogt.com>
+# Copyright © 2025 Noah Vogt <noah@noahvogt.com>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,5 +32,6 @@ from .validate_config import (
     validate_cd_burn_config,
     validate_manual_filedrop_sermon_upload_config,
     validate_autoprint_infomail_config,
+    validate_obs_song_slides_switcher_config,
 )
 from .slide_selection_iterator import slide_selection_iterator

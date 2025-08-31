@@ -1,4 +1,4 @@
-# Copyright © 2024 Noah Vogt <noah@noahvogt.com>
+# Copyright © 2025 Noah Vogt <noah@noahvogt.com>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,6 +50,18 @@ def validate_obs_song_scene_switcher_config() -> None:
         "OBS_WEBSOCKET_PORT": const.OBS_WEBSOCKET_PORT,
         "OBS_SONG_SCENE_PREFIX": const.OBS_SONG_SCENE_PREFIX,
     }
+    general_config_validator(needed_constants, gui_error_out=True)
+
+
+def validate_obs_song_slides_switcher_config() -> None:
+    needed_constants: dict = {
+        "NEXTSONG_CACHE_FILE": const.NEXTSONG_CACHE_FILE,
+        "SSYNC_SLIDESHOW_INPUT_NAMING": const.SSYNC_SLIDESHOW_INPUT_NAMING,
+        "OBS_WEBSOCKET_HOSTNAME": const.OBS_WEBSOCKET_HOSTNAME,
+        "OBS_WEBSOCKET_PORT": const.OBS_WEBSOCKET_PORT,
+        "OBS_SONG_SCENE_PREFIX": const.OBS_SONG_SCENE_PREFIX,
+    }
+
     general_config_validator(needed_constants, gui_error_out=True)
 
 

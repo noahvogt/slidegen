@@ -1,4 +1,4 @@
-# Copyright © 2024 Noah Vogt <noah@noahvogt.com>
+# Copyright © 2025 Noah Vogt <noah@noahvogt.com>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,3 +27,29 @@ def change_to_song_scene(song_number: int) -> None:
         timeout=3,
     )
     cl.set_current_program_scene(f"{const.OBS_SONG_SCENE_PREFIX}{song_number}")
+
+
+def change_to_next_song_slide(song_number: int) -> None:
+    cl = obs.ReqClient(
+        host=const.OBS_WEBSOCKET_HOSTNAME,
+        port=const.OBS_WEBSOCKET_PORT,
+        password=const.OBS_WEBSOCKET_PASSWORD,
+        timeout=3,
+    )
+    cl.trigger_hotkey_by_name(
+        hotkeyName="SlideShow.NextSlide",
+        contextName=f"{const.SSYNC_SLIDESHOW_INPUT_NAMING}{song_number}",
+    )
+
+
+def change_to_previous_song_slide(song_number: int) -> None:
+    cl = obs.ReqClient(
+        host=const.OBS_WEBSOCKET_HOSTNAME,
+        port=const.OBS_WEBSOCKET_PORT,
+        password=const.OBS_WEBSOCKET_PASSWORD,
+        timeout=3,
+    )
+    cl.trigger_hotkey_by_name(
+        hotkeyName="SlideShow.PreviousSlide",
+        contextName=f"{const.SSYNC_SLIDESHOW_INPUT_NAMING}{song_number}",
+    )
