@@ -378,7 +378,7 @@ These are some issues and possible changes that will be addressed or at least co
 - use smarter multi slide splitter algorithm: either by pattern recognition like line matching or rhymes of the last word or by incorporating some sort of sub-song-structures in the body.
 - add warnings that indicate potential problems with rclone syncing
 - add (semantic) versioning, maybe even display on program run as text
-- add not-yet-public streaming workflow scripts
+- move to a yml config file format
 - for sermon segment generating: Check if file duration and type roughly match the target to avoid useless regenerating. Also, parallelization.
 - make multiplatform ejecting of cd drives possible / fix win32 popup after ejecting
 - fix cd recording edge cases when:
