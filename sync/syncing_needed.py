@@ -14,10 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
-
 from utils import log
-
 import config as const
 
 
@@ -26,35 +23,13 @@ def syncing_needed(offline_flag_enabled: bool) -> bool:
         log("skipping sync with remote", color="cyan")
         return False
 
-    if not cachefiles_found():
-        return True
-
     log("checking for remote changes...")
-    os.system(
-        'rclone md5sum "{}" --checkfile "{}" > "{}" 2> "{}"'.format(
-            const.RCLONE_REMOTE_DIR,
-            os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHECKFILE_NAMING),
-            os.devnull,
-            os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING),
+
+    exit_code = os.system(
+        'rclone check "{}" "{}" --one-way --quiet'.format(
+            const.RCLONE_REMOTE_DIR, const.RCLONE_LOCAL_DIR
         )
     )
 
-    with open(
-        os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING),
-        mode="r",
-        encoding="utf-8-sig",
-    ) as cachefile_reader:
-        cachefile_content = cachefile_reader.readlines()
-    for line in cachefile_content:
-        if re.search(": ([0-9])+ differences found$", line):
-            diffs = int(line[line.rfind(":") + 1 : line.find("differences")])
-            return bool(diffs)
-    return False
-
-
-def cachefiles_found() -> bool:
-    return os.path.isfile(
-        os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CHECKFILE_NAMING)
-    ) and os.path.isfile(
-        os.path.join(const.SSYNC_CACHE_DIR, const.SSYNC_CACHEFILE_NAMING)
-    )
+    # rclone check returns 0 when every file is identical
+    return exit_code != 0

@@ -14,5 +14,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from .sync_slide_repo import sync_slide_repo
-from .save_new_checkfile import save_new_checkfile
 from .syncing_needed import syncing_needed
