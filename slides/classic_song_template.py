@@ -57,28 +57,15 @@ class ClassicSongTemplate(SongTemplate):
                 img.border(color=Color(const.FG_COLOR), width=30, height=0)
                 trimmed_img_width = img.width
                 trimmed_img_height = img.height
-                concat_height = int(
+                y_offset = int(
                     (const.TITLE_HEIGHT - trimmed_img_height) / 2
-                )
-                correction_heigt = (
-                    const.TITLEBAR_TRIANGLE_HEIGTH
-                    - trimmed_img_height
-                    - (2 * concat_height)
                 )
                 concatenated_img = Image(
                     width=trimmed_img_width,
-                    height=concat_height,
+                    height=const.TITLEBAR_TRIANGLE_HEIGTH,
                     background=Color(const.FG_COLOR),
                 )
-                concatenated_img.sequence.append(img)
-                concatenated_img.sequence.append(
-                    Image(
-                        width=trimmed_img_width,
-                        height=concat_height + correction_heigt,
-                        background=Color(const.FG_COLOR),
-                    )
-                )
-                concatenated_img.concat(stacked=True)
+                concatenated_img.composite(img, left=0, top=y_offset)
                 if concatenated_img.width > (
                     const.WIDTH
                     - const.PLAYER_WIDTH

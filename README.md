@@ -193,8 +193,8 @@ This is so that when the text width on maximum font size collides with the playe
 Slidegen uses two font styles, *normal* and *bold*. `BOLD_FONT_PATH` should point the respecting ttf/otf file for the bold style font and `FONT_PATH` for the normal style font. The default config
 
 ```python
-BOLD_FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
-FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
+BOLD_FONT_PATH = "/usr/share/fonts/gsfonts/URWGothic-Demi.otf"
+FONT_PATH = "/usr/share/fonts/gsfonts/URWGothic-Book.otf"
 ```
 
 is made to use the [ttf-century-gothic](https://aur.archlinux.org/packages/ttf-century-gothic) font on the AUR on Arch Linux (-based distros).

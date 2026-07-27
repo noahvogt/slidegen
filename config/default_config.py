@@ -39,8 +39,8 @@ INFODISPLAY_Y = 1000
 PLAYER_WIDTH = 560
 PLAYER_HEIGHT = 315
 
-BOLD_FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothicBold.ttf"
-FONT_PATH = "/usr/share/fonts/TTF/century-gothic/CenturyGothic.ttf"
+BOLD_FONT_PATH = "/usr/share/fonts/gsfonts/URWGothic-Demi.otf"
+FONT_PATH = "/usr/share/fonts/gsfonts/URWGothic-Book.otf"
 
 METADATA_FONT_SIZE = 36
 METADATA_X = 70
