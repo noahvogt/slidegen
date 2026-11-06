@@ -17,13 +17,9 @@ import sys
 from os import path, listdir
 from shlex import split
 from shutil import copyfile
-from re import match, sub
+from re import match
 from subprocess import Popen
 import ftplib
-from datetime import datetime, timezone
-from dataclasses import dataclass
-import requests
-from requests.auth import HTTPBasicAuth
 
 from PyQt5.QtWidgets import (  # pylint: disable=no-name-in-module
     QApplication,
@@ -37,7 +33,6 @@ from utils import (
     expand_dir,
     log,
     InfoMsgBox,
-    RadioButtonDialog,
 )
 from audio import (
     get_ffmpeg_timestamp_from_frame,
@@ -52,6 +47,7 @@ from .verify import (
     is_legal_sheet_filename,
 )
 from .gui import WaveAndSheetPreviewChooserGUI
+from .website_upload import upload_sermon_to_website
 
 
 def get_full_wav_path(segment: SermonSegment) -> str:
@@ -245,151 +241,6 @@ def get_segments_with_suitable_time(
     return suitable_segments
 
 
-@dataclass
-class Preacher:
-    id: int
-    name: str
-
-
-@dataclass
-class UploadedSermon:
-    title: str
-    remote_audiofile_url: str
-
-
-def get_preachers():
-    try:
-        response = requests.get(
-            const.SERMON_UPLOAD_WPSM_API_BASE_URL + "/wpfc_preacher",
-            timeout=const.HTTP_REQUEST_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        data = response.json()
-        preachers: list[Preacher] = []
-        for preacher in data:
-            preacher_id = int(preacher["id"])
-            # pylint: disable=invalid-name
-            name = str(preacher["name"])
-            preachers.append(Preacher(preacher_id, name))
-        if len(preachers) == 0:
-            raise CustomException("Not enough preachers")
-        return preachers
-    except CustomException as e:
-        InfoMsgBox(
-            QMessageBox.Critical,
-            "Error",
-            f"Error: Could not get preachers. Reason: {e}",
-        )
-        sys.exit(1)
-    except (
-        requests.exceptions.RequestException,
-        KeyError,
-        ValueError,
-    ) as e:
-        InfoMsgBox(
-            QMessageBox.Critical,
-            "Error",
-            f"Error: Could not get preachers. Reason: {type(e).__name__}",
-        )
-        sys.exit(1)
-
-
-def choose_preacher() -> Preacher:
-    preachers = get_preachers()
-    preacher_names = [preacher.name for preacher in preachers]
-    preacher_ids = [preacher.id for preacher in preachers]
-    app = QApplication([])
-    dialog = RadioButtonDialog(preacher_names, "Choose a Preacher")
-    if dialog.exec_() == QDialog.Accepted:
-        log(f"Dialog accepted: {dialog.chosen}")
-        return Preacher(
-            preacher_ids[preacher_names.index(dialog.chosen)], dialog.chosen
-        )
-    del app
-    InfoMsgBox(
-        QMessageBox.Critical,
-        "Error",
-        "Error: Sermon upload canceled as no preacher selected.",
-    )
-    sys.exit(1)
-
-
-def make_sermon_filename(sermon_name: str) -> str:
-    # Custom replacements for umlauts and ß
-    replacements = {
-        "ä": "ae",
-        "ö": "oe",
-        "ü": "ue",
-        "Ä": "Ae",
-        "Ö": "Oe",
-        "Ü": "Ue",
-        "ß": "ss",
-    }
-    for src, target in replacements.items():
-        sermon_name = sermon_name.replace(src, target)
-
-    sermon_name = sermon_name.replace(" ", "_")
-
-    sermon_name = sub(r"[^a-zA-Z0-9_-]", "", sermon_name)
-
-    return sermon_name + ".mp3"
-
-
-def upload_mp3_to_wordpress(filename: str) -> UploadedSermon:
-    app = QApplication([])
-    sermon_name, accepted_dialog = QInputDialog.getText(
-        None,
-        "Input Dialog",
-        "Enter the Name of the Sermon:",
-    )
-    del app
-
-    if not accepted_dialog:
-        sys.exit(0)
-
-    wanted_filename = make_sermon_filename(sermon_name)
-
-    mp3_final_path = path.join(path.split(filename)[0], wanted_filename)
-    make_sermon_mp3(filename, mp3_final_path)
-
-    headers = {
-        "Content-Disposition": f"attachment; filename={wanted_filename}",
-        "Content-Type": "audio/mpeg",
-    }
-
-    with open(mp3_final_path, "rb") as f:
-        try:
-            log(f"uploading {mp3_final_path} to wordpress...")
-            response = requests.post(
-                const.SERMON_UPLOAD_WPSM_API_BASE_URL + "/media",
-                headers=headers,
-                data=f,
-                auth=HTTPBasicAuth(
-                    const.SERMON_UPLOAD_WPSM_USER,
-                    const.SERMON_UPLOAD_WPSM_PASSWORD,
-                ),
-                timeout=const.HTTP_REQUEST_TIMEOUT_SECONDS,
-            )
-            response.raise_for_status()
-            data = response.json()
-            remote_audiofile_url = data["guid"]["rendered"]
-            log(f"url of uploaded wordpress media: {remote_audiofile_url}")
-            return UploadedSermon(sermon_name, remote_audiofile_url)
-        except (
-            requests.exceptions.RequestException,
-            KeyError,
-            FileNotFoundError,
-            PermissionError,
-            IOError,
-        ) as e:
-            InfoMsgBox(
-                QMessageBox.Critical,
-                "Error",
-                f"Error: Could not upload sermon to wordpress. Reason: {e}",
-            )
-            sys.exit(1)
-
-
 def upload_sermon_to_ftp_server(audiofile: str) -> None:
     try:
         ext = ".mp3"
@@ -452,72 +303,11 @@ def upload_sermon_to_ftp_server(audiofile: str) -> None:
         sys.exit(1)
 
 
-def create_wpsm_sermon(
-    uploaded_sermon: UploadedSermon,
-    unix_seconds: int,
-    preacher_id: int,
-) -> None:
-    try:
-        log(f"creating WPSM sermon '{uploaded_sermon.title}'...")
-
-        headers = {"Content-Type": "application/json"}
-        data = {
-            "title": uploaded_sermon.title,
-            "status": "publish",
-            "wpfc_preacher": preacher_id,
-            "sermon_date": unix_seconds,
-            "comment_status": "closed",
-            "sermon_audio": uploaded_sermon.remote_audiofile_url,
-        }
-        print(data)
-
-        response = requests.post(
-            const.SERMON_UPLOAD_WPSM_API_BASE_URL + "/wpfc_sermon",
-            headers=headers,
-            json=data,
-            auth=HTTPBasicAuth(
-                const.SERMON_UPLOAD_WPSM_USER,
-                const.SERMON_UPLOAD_WPSM_PASSWORD,
-            ),
-            timeout=const.HTTP_REQUEST_TIMEOUT_SECONDS,
-        )
-        print(response.status_code)
-        print(response.text)
-        response.raise_for_status()
-        data = response.json()
-    except (
-        requests.exceptions.RequestException,
-        KeyError,
-        FileNotFoundError,
-        PermissionError,
-        IOError,
-    ) as e:
-        InfoMsgBox(
-            QMessageBox.Critical,
-            "Error",
-            f"Error: Could not create sermon wordpress post for '{uploaded_sermon.title}'. Reason: {e}",
-        )
-        sys.exit(1)
-
-    InfoMsgBox(
-        QMessageBox.Information,
-        "Success",
-        f"Sermon '{uploaded_sermon.title}' uploaded successfully.",
-    )
-
-
 def upload_sermon_audiofile(audiofile: str, yyyy_mm_dd: str) -> None:
     if const.SERMON_UPLOAD_USE_FTP:
         upload_sermon_to_ftp_server(audiofile)
     else:
-        dt = datetime.fromisoformat(yyyy_mm_dd).replace(tzinfo=timezone.utc)
-
-        create_wpsm_sermon(
-            uploaded_sermon=upload_mp3_to_wordpress(audiofile),
-            # puts date to midnight of UTC
-            unix_seconds=int(dt.timestamp()),
-            preacher_id=choose_preacher().id,
-        )
+        upload_sermon_to_website(audiofile, yyyy_mm_dd)
 
 
 def upload_sermon_for_day(yyyy_mm_dd: str, choose_manually=False):
@@ -548,9 +338,7 @@ def manually_choose_and_upload_segments(segments, yyyy_mm_dd):
         rel_wave_paths.append(f"{get_audio_rel_path_from_segment(segment)}.wav")
 
     app = QApplication([])
-    target_dir = path.join(
-        expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd
-    )
+    target_dir = path.join(expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd)
     dialog = WaveAndSheetPreviewChooserGUI(
         target_dir,
         rel_wave_paths,

@@ -107,9 +107,12 @@ CD_RECORD_WEBSOCKET_SLEEP = 0.3
 
 SERMON_UPLOAD_USE_FTP = False
 
-SERMON_UPLOAD_WPSM_API_BASE_URL = ""
-SERMON_UPLOAD_WPSM_USER = ""
-SERMON_UPLOAD_WPSM_PASSWORD = ""
+# website endpoint holee/v1 (themes/holee/inc/predigt-upload.php in the repo website)
+SERMON_UPLOAD_HOLEE_API_BASE_URL = ""
+SERMON_UPLOAD_HOLEE_KEY = ""
+# optional: gottesdienst.json of the intern area, prefills title, preacher and
+# Bible passage; empty = fill in everything by hand
+SERMON_UPLOAD_SERVICE_INFO_URL = ""
 
 SERMON_UPLOAD_FTP_HOSTNAME = ""
 SERMON_UPLOAD_FTP_USER = ""

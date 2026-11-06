@@ -109,9 +109,8 @@ def validate_manual_filedrop_sermon_upload_config() -> None:
         general_config_validator(needed_constants, gui_error_out=True)
     else:
         needed_constants: dict = {
-            "SERMON_UPLOAD_WPSM_API_BASE_URL": const.SERMON_UPLOAD_WPSM_API_BASE_URL,
-            "SERMON_UPLOAD_WPSM_USER": const.SERMON_UPLOAD_WPSM_USER,
-            "SERMON_UPLOAD_WPSM_PASSWORD": const.SERMON_UPLOAD_WPSM_PASSWORD,
+            "SERMON_UPLOAD_HOLEE_API_BASE_URL": const.SERMON_UPLOAD_HOLEE_API_BASE_URL,
+            "SERMON_UPLOAD_HOLEE_KEY": const.SERMON_UPLOAD_HOLEE_KEY,
         }
         general_config_validator(needed_constants, gui_error_out=True)
 
@@ -121,9 +120,7 @@ def validate_sermon_upload_config() -> None:
     validate_manual_filedrop_sermon_upload_config()
 
 
-def general_config_validator(
-    needed_constants: dict, gui_error_out=False
-) -> None:
+def general_config_validator(needed_constants: dict, gui_error_out=False) -> None:
     for key in needed_constants:
         if needed_constants.get(key) == "":
             msg = "needed config entry '{}' is empty".format(key)
