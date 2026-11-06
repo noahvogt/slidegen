@@ -181,7 +181,11 @@ def get_plan_metadata(yyyy_mm_dd: str) -> tuple[SermonMetadata, str]:
         guest=not sermon.get("prediger_konto", True),
         bible_passage=sermon.get("bibelstelle") or "",
     )
-    missing = [
+    return metadata, "Vorausgefüllt aus dem Gottesdienstplan."
+
+
+def labels_of_empty_fields(metadata: SermonMetadata) -> list[str]:
+    return [
         label
         for label, value in (
             ("Titel", metadata.title),
@@ -190,10 +194,34 @@ def get_plan_metadata(yyyy_mm_dd: str) -> tuple[SermonMetadata, str]:
         )
         if not value
     ]
-    note = "Vorausgefüllt aus dem Gottesdienstplan."
-    if missing:
-        note += " Fehlt dort: " + ", ".join(missing) + "."
-    return metadata, note
+
+
+def get_audio_duration(audiofile: str) -> str:
+    """Length as "43:46" or "1:02:05", to see that the right audio was
+    chosen; "unbekannt" if ffprobe cannot read it."""
+    result = run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            audiofile,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    try:
+        secs = round(float(result.stdout.strip()))
+    except ValueError:
+        log(f"could not get duration of {audiofile}", color="yellow")
+        return "unbekannt"
+    hours, rest = divmod(secs, 3600)
+    mins, secs = divmod(rest, 60)
+    return f"{hours}:{mins:02}:{secs:02}" if hours else f"{mins}:{secs:02}"
 
 
 class SermonMetadataDialog(QDialog):  # pylint: disable=too-few-public-methods
@@ -203,24 +231,34 @@ class SermonMetadataDialog(QDialog):  # pylint: disable=too-few-public-methods
         metadata: SermonMetadata,
         preachers: list[Preacher],
         note: str,
+        duration: str,
+        replace: bool,
     ):
         super().__init__()
-        self.setWindowTitle("Predigt hochladen")
+        self.setWindowTitle("Predigt ersetzen" if replace else "Predigt hochladen")
         self.setMinimumWidth(520)
         self.preachers = preachers
         self.new_preacher = False
+        action = "Ersetzen" if replace else "Hochladen"
 
         layout = QVBoxLayout(self)
         note_label = QLabel(
             note
-            + "\nBitte prüfen und ergänzen. Mit «Hochladen» wird die Predigt "
-            + "auf der Website veröffentlicht."
+            + "\nBitte prüfen und ergänzen. "
+            + (
+                f"Mit «{action}» wird die bestehende Predigt vom "
+                + f"{german_date(yyyy_mm_dd)} auf der Website ersetzt."
+                if replace
+                else f"Mit «{action}» wird die Predigt auf der Website "
+                + "veröffentlicht."
+            )
         )
         note_label.setWordWrap(True)
         layout.addWidget(note_label)
 
         form = QFormLayout()
         form.addRow("Datum:", QLabel(german_date(yyyy_mm_dd)))
+        form.addRow("Audio:", QLabel(f"{duration} (Länge)"))
         self.title_edit = QLineEdit(metadata.title)
         form.addRow("Titel:", self.title_edit)
         self.preacher_box = QComboBox()
@@ -241,7 +279,7 @@ class SermonMetadataDialog(QDialog):  # pylint: disable=too-few-public-methods
         self.sync_guest_flag(metadata.preacher)
 
         buttons = QDialogButtonBox()
-        buttons.addButton("Hochladen", QDialogButtonBox.AcceptRole)
+        buttons.addButton(action, QDialogButtonBox.AcceptRole)
         buttons.addButton("Abbrechen", QDialogButtonBox.RejectRole)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -369,6 +407,7 @@ def upload_sermon_to_website(audiofile: str, yyyy_mm_dd: str) -> None:
         replace = True
         # values of the existing sermon where the plan has none
         old_preachers = existing.get("prediger") or []
+        plan_empty = labels_of_empty_fields(metadata)
         metadata = SermonMetadata(
             title=metadata.title or existing.get("titel") or "",
             preacher=metadata.preacher
@@ -376,8 +415,21 @@ def upload_sermon_to_website(audiofile: str, yyyy_mm_dd: str) -> None:
             guest=metadata.guest,
             bible_passage=metadata.bible_passage or existing.get("bibelstelle") or "",
         )
+        taken = [f for f in plan_empty if f not in labels_of_empty_fields(metadata)]
+        if taken:
+            note += " Von der bestehenden Predigt übernommen: " + ", ".join(taken) + "."
+    missing = labels_of_empty_fields(metadata)
+    if missing:
+        note += " Fehlt noch: " + ", ".join(missing) + "."
 
-    dialog = SermonMetadataDialog(yyyy_mm_dd, metadata, preachers, note)
+    dialog = SermonMetadataDialog(
+        yyyy_mm_dd,
+        metadata,
+        preachers,
+        note,
+        get_audio_duration(audiofile),
+        replace,
+    )
     if dialog.exec_() != QDialog.Accepted:
         log("sermon upload canceled")
         sys.exit(0)
