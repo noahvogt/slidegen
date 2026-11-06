@@ -68,9 +68,19 @@ class SermonUploadError(Exception):
     pass
 
 
+# Keeps the QApplication alive: the callers before us (e.g. the segment
+# chooser) delete theirs, and an unreferenced new one would be garbage
+# collected at once, so the next dialog aborts ("Must construct a
+# QApplication before a QWidget").
+_QAPP: QApplication | None = None
+
+
 def get_qapp() -> QApplication:
+    global _QAPP  # pylint: disable=global-statement
     app = QApplication.instance()
-    return app if app is not None else QApplication([])  # pyright: ignore
+    if app is None:
+        _QAPP = app = QApplication([])
+    return app  # pyright: ignore
 
 
 def show_message(icon: QMessageBox.Icon, title: str, text: str) -> None:
