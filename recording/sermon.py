@@ -16,6 +16,7 @@
 import sys
 from os import path, listdir
 from shlex import split
+from datetime import date
 from shutil import copyfile
 from re import match
 from subprocess import Popen
@@ -47,7 +48,7 @@ from .verify import (
     is_legal_sheet_filename,
 )
 from .gui import WaveAndSheetPreviewChooserGUI
-from .website_upload import upload_sermon_to_website
+from .website_upload import upload_sermon_to_website, german_date, show_message
 
 
 def get_full_wav_path(segment: SermonSegment) -> str:
@@ -310,15 +311,40 @@ def upload_sermon_audiofile(audiofile: str, yyyy_mm_dd: str) -> None:
         upload_sermon_to_website(audiofile, yyyy_mm_dd)
 
 
+def has_cd_recording_of_day(yyyy_mm_dd: str) -> bool:
+    day_dir = path.join(expand_dir(const.CD_RECORD_OUTPUT_BASEDIR), yyyy_mm_dd)
+    try:
+        return any(is_legal_sheet_filename(file) for file in listdir(day_dir))
+    except OSError:
+        return False
+
+
+def no_cd_recording_exit(yyyy_mm_dd: str) -> None:
+    """A plain message instead of a traceback, e.g. when the button is
+    pressed on a day without service."""
+    is_today = yyyy_mm_dd == date.today().isoformat()
+    day = (
+        f"heute ({german_date(yyyy_mm_dd)})"
+        if is_today
+        else f"den {german_date(yyyy_mm_dd)}"
+    )
+    text = f"Für {day} gibt es keine CD-Aufnahme, also auch keine Predigt."
+    if is_today:
+        text += (
+            "\n\nFür einen früheren Gottesdienst den Button «Predigt Archiv» "
+            + "verwenden."
+        )
+    log(text, color="yellow")
+    show_message(QMessageBox.Information, "Predigt-Upload", text)
+    sys.exit(1)
+
+
 def upload_sermon_for_day(yyyy_mm_dd: str, choose_manually=False):
+    if not has_cd_recording_of_day(yyyy_mm_dd):
+        no_cd_recording_exit(yyyy_mm_dd)
     segments = get_possible_sermon_segments_of_day(yyyy_mm_dd)
     if not segments:
-        InfoMsgBox(
-            QMessageBox.Critical,
-            "Error",
-            f"Error: No segment for day '{yyyy_mm_dd}' found",
-        )
-        sys.exit(1)
+        no_cd_recording_exit(yyyy_mm_dd)
 
     suitable_segments = get_segments_with_suitable_time(segments)
     if len(suitable_segments) == 1 and not choose_manually:
