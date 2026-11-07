@@ -131,7 +131,9 @@ def put_slides_into_obs() -> list[str]:
     return problems
 
 
-def make_slides(plan: list[PlanItem], songs_dir: str) -> list[str]:
+def make_slides(plan: list[PlanItem], songs_dir: str, progress=None) -> list[str]:
+    """Make the slides of the plan and load them into OBS. progress(done,
+    total, text) is told after each song and before OBS. Returns problems."""
     # pylint: disable=import-outside-toplevel
     import slidegen
     from input.slide_selection_iterator import create_and_get_dest_dir
@@ -143,47 +145,95 @@ def make_slides(plan: list[PlanItem], songs_dir: str) -> list[str]:
     )
     from utils import clear_obs_slides_dir, create_min_obs_subdirs, expand_dir
 
+    def tell(done: int, total: int, text: str) -> None:
+        print(text)
+        if progress:
+            progress(done, total, text)
+
     style = SlideStyle(
         ClassicSongTemplate,  # pyright: ignore [reportGeneralTypeIssues]
         ClassicStartSlide,  # pyright: ignore [reportGeneralTypeIssues]
         ClassicSongSlide,  # pyright: ignore [reportGeneralTypeIssues]
     )
+    todo = [i for i in plan if i.folder is not None and i.order and i.files]
     clear_obs_slides_dir()
-    threads = []
-    for item in plan:
-        if item.folder is None or not item.order or not item.files:
-            continue
+    # all songs in parallel as ssync does; the progress counts finished songs
+    started = []
+    for item in todo:
         dest_dir = create_and_get_dest_dir(expand_dir(const.OBS_SLIDES_DIR), item.folder)
-        print(f"Lied {item.folder}: {item.files[0]} ({item.order})")
-        threads += slidegen.Slidegen(
+        threads = slidegen.Slidegen(
             style, str(Path(songs_dir) / item.files[0]), dest_dir, item.order
         ).execute()
-    for thread in threads:
-        thread.join()
+        started.append((item, threads))
+    tell(0, len(todo) + 1, f"Lied {todo[0].folder} wird erzeugt …" if todo else "")
+    for number, (item, threads) in enumerate(started, start=1):
+        for thread in threads:
+            thread.join()
+        following = f"Lied {started[number][0].folder} wird erzeugt …" if number < len(started) else "Folien werden in OBS geladen …"
+        tell(number, len(todo) + 1, following)
     create_min_obs_subdirs()
-    return put_slides_into_obs()
+    problems = put_slides_into_obs()
+    tell(len(todo) + 1, len(todo) + 1, "fertig")
+    return problems
 
 
-def overview(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict) -> bool:
-    """The plan for the Live-Technik; True when confirmed. A song with
-    several files gets a choice."""
+def result_text(plan: list[PlanItem], problems: list[str]) -> str:
+    made = sum(1 for i in plan if i.folder and i.order and i.files)
+    text = f"Folien für {made} Lieder erzeugt und in OBS geladen." if not problems else f"Folien für {made} Lieder erzeugt."
+    if problems:
+        text += "\n\n" + "\n".join(problems)
+    if any(i.folder and not (i.order and i.files) for i in plan if i.song):
+        text += (
+            "\n\nNicht alle Lieder haben Folien (siehe Übersicht). ssync kann sie"
+            + " nicht ergänzen, es ersetzt immer alle Folien: entweder ohne diese"
+            + " Folien arbeiten oder alle Lieder mit ssync machen."
+        )
+    return text
+
+
+def run_window(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict, songs_dir: str) -> bool:
+    """One window: the plan to check (a song with several files gets a
+    choice), then the progress while the slides are made, then the result.
+    True if the slides were made."""
     # pylint: disable=import-outside-toplevel
-    from PyQt5.QtCore import Qt
+    import threading
+
+    from PyQt5.QtCore import QObject, Qt, QTimer, pyqtSignal
     from PyQt5.QtWidgets import (
         QComboBox,
         QDialog,
         QDialogButtonBox,
+        QHeaderView,
         QLabel,
+        QProgressBar,
+        QStackedWidget,
         QTableWidget,
         QTableWidgetItem,
         QVBoxLayout,
+        QWidget,
     )
 
+    class Bridge(QObject):  # the worker thread talks to the window only through signals
+        progress = pyqtSignal(int, int, str)
+        done = pyqtSignal(str)
+
+    class Window(QDialog):
+        busy = False
+
+        def reject(self):  # Esc / closing the window: not while making the slides
+            if not self.busy:
+                super().reject()
+
     qt()
-    dialog = QDialog()
+    dialog = Window()
     dialog.setWindowTitle(f"Folien aus dem Ablauf vom {german_date(yyyy_mm_dd)}")
     dialog.resize(1150, 520)
-    layout = QVBoxLayout(dialog)
+    pages = QStackedWidget()
+    QVBoxLayout(dialog).addWidget(pages)
+
+    # page 1: the plan
+    page = QWidget()
+    layout = QVBoxLayout(page)
     notes = service_warnings(service) + [
         "Ersetzt die Folien in allen Ordnern «Lied 1» bis "
         + f"«Lied {const.OBS_MIN_SUBDIRS}». Bitte prüfen und bestätigen."
@@ -191,16 +241,15 @@ def overview(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict) 
     label = QLabel("\n".join(notes))
     label.setWordWrap(True)
     layout.addWidget(label)
-
     table = QTableWidget(len(plan), 5)
     table.setHorizontalHeaderLabels(["Ordner", "Lied im Ablauf", "Datei", "Folien", "Hinweise"])
+
+    def notes_of(item: PlanItem) -> str:
+        return "\n".join(([f"Hinweis: {item.note}"] if item.note else []) + item.warnings)
+
     for row, item in enumerate(plan):
-        folder = f"Lied {item.folder}" if item.folder else "–"
-        song = item.song or "(offen)"
-        if item.alternative:
-            song += f"  [Alternative zu {item.place}]"
-        cells = [folder, song, "", item.order or "keine Folien",
-                 "\n".join(([f"Hinweis: {item.note}"] if item.note else []) + item.warnings)]
+        cells = [f"Lied {item.folder}" if item.folder else "–", item.song or "(offen)",
+                 "", item.order or "keine Folien", notes_of(item)]
         for col, text in enumerate(cells):
             cell = QTableWidgetItem(text)
             cell.setFlags(cell.flags() & ~Qt.ItemIsEditable)
@@ -214,25 +263,89 @@ def overview(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict) 
             def changed(name, item=item, row=row):
                 choose_file(item, name, songs)
                 table.item(row, 3).setText(item.order or "keine Folien")
-                table.item(row, 4).setText(
-                    "\n".join(([f"Hinweis: {item.note}"] if item.note else []) + item.warnings)
-                )
+                table.item(row, 4).setText(notes_of(item))
 
             box.currentTextChanged.connect(changed)
             table.setCellWidget(row, 2, box)
         else:
             table.setItem(row, 2, QTableWidgetItem(item.files[0] if item.files else "–"))
-    table.resizeColumnsToContents()
-    table.resizeRowsToContents()
+    # the notes (Hinweise of the Ablauf, warnings) take the rest of the width and wrap
+    table.verticalHeader().setVisible(False)
+    table.setWordWrap(True)
+    header = table.horizontalHeader()
+    for col in range(4):
+        header.setSectionResizeMode(col, QHeaderView.ResizeToContents)
+    header.setSectionResizeMode(4, QHeaderView.Stretch)
+    # row heights only once the notes column has its final width
+    header.sectionResized.connect(lambda *_: table.resizeRowsToContents())
     layout.addWidget(table)
-
     buttons = QDialogButtonBox()
-    buttons.addButton("Folien erzeugen", QDialogButtonBox.AcceptRole)
+    make_button = buttons.addButton("Folien erzeugen", QDialogButtonBox.AcceptRole)
     buttons.addButton("Abbrechen", QDialogButtonBox.RejectRole)
-    buttons.accepted.connect(dialog.accept)
     buttons.rejected.connect(dialog.reject)
     layout.addWidget(buttons)
-    return dialog.exec_() == QDialog.Accepted
+    pages.addWidget(page)
+
+    # page 2: progress, page 3: result
+    page = QWidget()
+    layout = QVBoxLayout(page)
+    layout.addStretch()
+    status = QLabel("Folien werden vorbereitet …")
+    status.setAlignment(Qt.AlignCenter)
+    bar = QProgressBar()
+    layout.addWidget(status)
+    layout.addWidget(bar)
+    layout.addStretch()
+    pages.addWidget(page)
+    page = QWidget()
+    layout = QVBoxLayout(page)
+    result = QLabel()
+    result.setWordWrap(True)
+    result.setAlignment(Qt.AlignCenter)
+    layout.addStretch()
+    layout.addWidget(result)
+    layout.addStretch()
+    close = QDialogButtonBox()
+    close.addButton("Schliessen", QDialogButtonBox.AcceptRole)
+    close.accepted.connect(dialog.accept)
+    layout.addWidget(close)
+    pages.addWidget(page)
+
+    bridge = Bridge()
+    made = {"ok": False}
+
+    def on_progress(done: int, total: int, text: str) -> None:
+        bar.setMaximum(total)
+        bar.setValue(done)
+        if text and text != "fertig":
+            status.setText(text)
+
+    def on_done(text: str) -> None:
+        dialog.busy = False
+        result.setText(text)
+        pages.setCurrentIndex(2)
+
+    bridge.progress.connect(on_progress)
+    bridge.done.connect(on_done)
+
+    def work() -> None:
+        try:
+            problems = make_slides(plan, songs_dir, bridge.progress.emit)
+            made["ok"] = True
+            bridge.done.emit(result_text(plan, problems))
+        except BaseException as error:  # pylint: disable=broad-except
+            # slidegen ends with sys.exit() on a broken file
+            bridge.done.emit(f"Fehler beim Erzeugen der Folien: {error!r}\nBitte die Folien mit ssync machen.")
+
+    def start() -> None:
+        dialog.busy = True
+        pages.setCurrentIndex(1)
+        threading.Thread(target=work, daemon=True).start()
+
+    make_button.clicked.connect(start)
+    QTimer.singleShot(0, table.resizeRowsToContents)
+    dialog.exec_()
+    return made["ok"]
 
 
 def print_plan(plan: list[PlanItem], service: dict) -> None:
@@ -283,22 +396,8 @@ def main() -> int:
         message("Im Ablauf stehen keine Lieder.")
         return 1
 
-    if not overview(plan, service, args.datum, {s.name: s for s in song_files}):
+    if not run_window(plan, service, args.datum, {s.name: s for s in song_files}, songs_dir):
         print("abgebrochen")
-        return 0
-    problems = make_slides(plan, songs_dir)
-    made = sum(1 for i in plan if i.folder and i.order and i.files)
-    message(
-        f"Folien für {made} Lieder erzeugt."
-        + ("\n\n" + "\n".join(problems) if problems else "")
-        + (
-            "\n\nNicht alle Lieder haben Folien (siehe Übersicht). ssync kann sie"
-            + " nicht ergänzen, es ersetzt immer alle Folien: entweder ohne diese"
-            + " Folien arbeiten oder alle Lieder mit ssync machen."
-            if any(i.folder and not (i.order and i.files) for i in plan if i.song)
-            else ""
-        )
-    )
     return 0
 
 
