@@ -111,7 +111,9 @@ def put_slides_into_obs() -> list[str]:
     try:
         client = obs_client()
     except Exception:  # pylint: disable=broad-except
-        return ["OBS läuft nicht: die Folien sind erzeugt, OBS zeigt sie nach dem Start an."]
+        # the slideshows keep a fixed list of files, so OBS would show the old
+        # number of slides after its start
+        return ["OBS läuft nicht. Bitte OBS starten und «Folien aus Ablauf» nochmals drücken."]
     problems = []
     for number in range(1, const.OBS_MIN_SUBDIRS + 1):
         folder = Path(const.OBS_SLIDES_DIR) / f"{const.OBS_SUBDIR_NAMING}{number}"
