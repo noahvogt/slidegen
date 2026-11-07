@@ -38,11 +38,8 @@ def get_songtext_by_structure(content: list, structure: str) -> str:
                 break
             output_str += stripped_line + "\n"
 
-        if (
-            stripped_line.startswith("[")
-            and stripped_line.endswith("]")
-            and structure in stripped_line
-        ):
+        # the whole header: verse "1" must not match "[10]"
+        if stripped_line == "[" + structure + "]":
             found_desired_structure: bool = True
 
     if not found_desired_structure:

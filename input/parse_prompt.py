@@ -51,46 +51,41 @@ def generate_final_prompt(structure_prompt_answer, full_song_structure) -> str:
 
 
 def is_and_give_prompt_input_valid(
-    prompt: str, full_structure: list
+    prompt: str, full_structure: str | list
 ) -> tuple[bool, str]:
-    if not match(
-        r"^(([0-9]+|R)|[0-9]+-[0-9]+)(,(([0-9]+|R)|[0-9]+-[0-9]+))*$", prompt
-    ):
+    if not match(r"^(([0-9]+|R)|[0-9]+-[0-9]+)(,(([0-9]+|R)|[0-9]+-[0-9]+))*$", prompt):
         return False, ""
 
+    # the structure comes as "1,2,R,3" from the song file: compare whole
+    # elements, not characters, so that verses from 10 on work as well
+    if isinstance(full_structure, str):
+        full_structure = structure_as_list(full_structure)
     allowed_elements = get_unique_structure_elements(full_structure)
-    test_elements = prompt.split(",")
-    for index, element in enumerate(test_elements):
+    result: list[str] = []
+    for element in prompt.split(","):
         if "-" in element:
-            splitted_dashpart = element.split("-")
-            if splitted_dashpart[0] >= splitted_dashpart[1]:
+            start_verse, end_verse = element.split("-")
+            if int(start_verse) >= int(end_verse):
                 return False, ""
-            if splitted_dashpart[0] not in allowed_elements:
+            if start_verse not in allowed_elements or end_verse not in allowed_elements:
                 return False, ""
-            if splitted_dashpart[1] not in allowed_elements:
-                return False, ""
-
-            dotted_part = calculate_dashed_prompt_part(
-                full_structure, splitted_dashpart[0], splitted_dashpart[1]
+            result += calculate_dashed_prompt_part(
+                full_structure, start_verse, end_verse
             )
-            dotted_part.reverse()
-            test_elements[index] = dotted_part[0]
-            for left_over_dotted_part_element in dotted_part[1:]:
-                test_elements.insert(index, left_over_dotted_part_element)
         else:
             if element not in allowed_elements:
                 return False, ""
+            result.append(element)
 
-    return True, ",".join(test_elements)
+    return True, ",".join(result)
 
 
 def calculate_dashed_prompt_part(
     content: list, start_verse: str, end_verse: str
 ) -> list:
-    content = list(content)
-    for i in content:
-        if i == ",":
-            content.remove(i)
+    """The part of the structure from start_verse to end_verse. A song that
+    starts (ends) with the refrain keeps the refrain before (after) it."""
+    content = [element for element in content if element != ","]
     start_index = content.index(start_verse)
     if start_index != 0:
         if content[0] == "R" and content[start_index - 1] == "R":
