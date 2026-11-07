@@ -209,6 +209,7 @@ def run_window(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict
         QLabel,
         QProgressBar,
         QStackedWidget,
+        QStyle,
         QTableWidget,
         QTableWidgetItem,
         QVBoxLayout,
@@ -217,7 +218,7 @@ def run_window(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict
 
     class Bridge(QObject):  # the worker thread talks to the window only through signals
         progress = pyqtSignal(int, int, str)
-        done = pyqtSignal(str)
+        done = pyqtSignal(str, str)  # text, level: information / warning / critical
 
     class Window(QDialog):
         busy = False
@@ -301,10 +302,14 @@ def run_window(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict
     pages.addWidget(page)
     page = QWidget()
     layout = QVBoxLayout(page)
+    # icon and text as in a QMessageBox, so a problem is seen at once
+    icon = QLabel()
+    icon.setAlignment(Qt.AlignCenter)
     result = QLabel()
     result.setWordWrap(True)
     result.setAlignment(Qt.AlignCenter)
     layout.addStretch()
+    layout.addWidget(icon)
     layout.addWidget(result)
     layout.addStretch()
     close = QDialogButtonBox()
@@ -322,8 +327,14 @@ def run_window(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict
         if text and text != "fertig":
             status.setText(text)
 
-    def on_done(text: str) -> None:
+    def on_done(text: str, level: str) -> None:
         dialog.busy = False
+        standard = {
+            "information": QStyle.SP_MessageBoxInformation,
+            "warning": QStyle.SP_MessageBoxWarning,
+            "critical": QStyle.SP_MessageBoxCritical,
+        }[level]
+        icon.setPixmap(dialog.style().standardIcon(standard).pixmap(64, 64))
         result.setText(text)
         pages.setCurrentIndex(2)
 
@@ -334,10 +345,11 @@ def run_window(plan: list[PlanItem], service: dict, yyyy_mm_dd: str, songs: dict
         try:
             problems = make_slides(plan, songs_dir, bridge.progress.emit)
             made["ok"] = True
-            bridge.done.emit(result_text(plan, problems))
+            missing = any(i.folder and not (i.order and i.files) for i in plan if i.song)
+            bridge.done.emit(result_text(plan, problems), "warning" if problems or missing else "information")
         except BaseException as error:  # pylint: disable=broad-except
             # slidegen ends with sys.exit() on a broken file
-            bridge.done.emit(f"Fehler beim Erzeugen der Folien: {error!r}\nBitte die Folien mit ssync machen.")
+            bridge.done.emit(f"Fehler beim Erzeugen der Folien: {error!r}\nBitte die Folien mit ssync machen.", "critical")
 
     def start() -> None:
         dialog.busy = True
