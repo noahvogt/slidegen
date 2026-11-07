@@ -8,6 +8,7 @@ Production runs on the livestreaming PC (Fedora Silverblue, inside the `python_v
 
 - **Entry points (repo root)** are thin: `colorama.init()`, a `validate_*_config()` call from `input/`, then a call into a package. Keep them that way.
   - `slidegen.py` → renders slides for one song file (`SRC_PATH DEST_DIR PROMPT_INPUT`).
+  - `auto_slides.py [--datum YYYY-MM-DD] [--dry-run]` → slides from the Ablauf (VulcanBoard button `folien_aus_ablauf`): gottesdienst.json (`SERMON_UPLOAD_SERVICE_INFO_URL`) → plan per "Lied N" folder (`song_plan/`) → Qt overview to confirm → slides + OBS slideshow inputs. `--dry-run` only prints the plan and needs no PyQt5/Wand/OBS.
   - `ssync.py` → interactive wrapper: sync the song repo (rclone/Nextcloud), choose songs via fzf, generate slides into the OBS dirs, push them to OBS via WebSocket.
   - `next_song.py` / `previous_song.py` / `force_song.py`, `next_slide.py` / `previous_slide.py` → OBS scene/slide switching (`song_switcher/`).
   - `set_cd_marker.py` (starts the recording if none is running, otherwise sets a track marker), `stop_cd_recording.py`, `choose_cd_dialog.py` / `burn_cds_of_today.py` → CD recording and burning (`recording/`).
@@ -16,7 +17,7 @@ Production runs on the livestreaming PC (Fedora Silverblue, inside the `python_v
   - `auto_print_infomail.py` → infomail printing (still Windows-only, `.bat`).
   - `check_song_files.py DIR [--fix-book OUTDIR]` → report on a folder of song files (what slidegen stops on, files without song number, numbers with several files, structures to check); changes nothing, `--fix-book` writes corrected copies elsewhere. Runs anywhere (only `song_files/`).
   - `export_song_index.py DIR` → JSON on stdout: per song number the files, verses and refrain. Used by the nightly job on the NAS (`website/deploy/folien-sync.sh`, clones this repo from GitHub to `/opt/slidegen`) for the intern area; keep it and `song_files/` standard-library only and compatible with Python 3.11 (NAS).
-- **Packages:** `slides/` (rendering with Wand/ImageMagick; `slides/engine/`), `input/` (argv/file/prompt parsing, `validate_config.py`), `sync/`, `song_switcher/`, `song_structure/` (verse prompt → slide order with refrains, pure Python), `song_files/` (song number like `gm 37` from the `book:` line, index number → files, file checks; pure Python, shared with the planned automatic slides), `recording/`, `os_agnostic/` (all `sys.platform` branching lives here), `utils/`, `audio/`.
+- **Packages:** `slides/` (rendering with Wand/ImageMagick; `slides/engine/`), `input/` (argv/file/prompt parsing, `validate_config.py`), `sync/`, `song_switcher/`, `song_structure/` (verse prompt → slide order with refrains, pure Python), `song_plan/` (Ablauf songs → "Lied N" folders, files, slide order, warnings; pure Python), `song_files/` (song number like `gm 37` from the `book:` line, index number → files, file checks; pure Python, shared with the planned automatic slides), `recording/`, `os_agnostic/` (all `sys.platform` branching lives here), `utils/`, `audio/`.
 - `media/` → README images only. `template.txt` → song file template.
 
 ## Config
