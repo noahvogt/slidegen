@@ -24,7 +24,13 @@ As mentioned above, this program is not made to be executed directly. Therefore 
 
     ./slidegen.py SRC_PATH DEST_DIR PROMPT_INPUT
 
-with `SRC_PATH` being the path to the song plain text file, `DEST_DIR` the output directory where the slide image file output is placed and `PROMPT_INPUT`
+with `SRC_PATH` being the path to the song plain text file, `DEST_DIR` the output directory where the slide image file output is placed and `PROMPT_INPUT` the verses to show (the same as the structure prompt of `ssync.py`):
+
+- empty or invalid: the whole `structure` of the song
+- verses in ascending order without `R`, e.g. `1-3`, `1,3` or `1-2,4`: the refrains are added from the `structure` (a refrain belongs to the verse before it, in a song starting with the refrain also to the verse after it; skipping verses never shows the refrain twice in a row). With `structure: 1,R,2,R,3,R`, `1,3` gives `1,R,3,R`.
+- with `R` or in an own order, e.g. `1,R,R` or `3,1`: taken as written, ranges like `1-2` filled in from the `structure`
+
+Spaces and long dashes (`1 – 3`) are accepted. The logic lives in `song_structure/` (only the standard library) and is tested in `tests/`.
 
 Here a short example:
 
