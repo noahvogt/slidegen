@@ -14,7 +14,9 @@ Production runs on the livestreaming PC (Fedora Silverblue, inside the `python_v
   - `cd_recording_status_websocket.py` → status server for the OBS dock (systemd unit on the PC).
   - `upload_sermon_of_today.py`, `choose_sermon_dialog.py`, `manually_upload_sermon_file.py` → sermon upload (`recording/sermon.py`).
   - `auto_print_infomail.py` → infomail printing (still Windows-only, `.bat`).
-- **Packages:** `slides/` (rendering with Wand/ImageMagick; `slides/engine/`), `input/` (argv/file/prompt parsing, `validate_config.py`), `sync/`, `song_switcher/`, `song_structure/` (verse prompt → slide order with refrains, pure Python), `recording/`, `os_agnostic/` (all `sys.platform` branching lives here), `utils/`, `audio/`.
+  - `check_song_files.py DIR [--fix-book OUTDIR]` → report on a folder of song files (what slidegen stops on, files without song number, numbers with several files, structures to check); changes nothing, `--fix-book` writes corrected copies elsewhere. Runs anywhere (only `song_files/`).
+  - `export_song_index.py DIR` → JSON on stdout: per song number the files, verses and refrain. Used by the nightly job on the NAS (`website/deploy/folien-sync.sh`, clones this repo from GitHub to `/opt/slidegen`) for the intern area; keep it and `song_files/` standard-library only and compatible with Python 3.11 (NAS).
+- **Packages:** `slides/` (rendering with Wand/ImageMagick; `slides/engine/`), `input/` (argv/file/prompt parsing, `validate_config.py`), `sync/`, `song_switcher/`, `song_structure/` (verse prompt → slide order with refrains, pure Python), `song_files/` (song number like `gm 37` from the `book:` line, index number → files, file checks; pure Python, shared with the planned automatic slides), `recording/`, `os_agnostic/` (all `sys.platform` branching lives here), `utils/`, `audio/`.
 - `media/` → README images only. `template.txt` → song file template.
 
 ## Config
@@ -32,7 +34,7 @@ Production runs on the livestreaming PC (Fedora Silverblue, inside the `python_v
 - State between button presses lives in small cache files (`NEXTSONG_CACHE_FILE`, `CD_RECORD_CACHEFILE`). The CD cache file has a fixed 6-line format checked in `recording/verify.py` (date, last marker, ffmpeg PID, start ms, last-track ms, CD number). Change the writer, the validator and all readers together.
 - The CD recording records from the PipeWire source `studiolive_main_mix` (set via `CD_RECORD_FFMPEG_INPUT_ARGS` on the PC). Tracks shorter than `CD_RECORD_MIN_TRACK_MILIS` are prevented on purpose (audio CD limitation).
 - Windows support (`requirements-win32.txt`, `os_agnostic/`) still exists in the code, but production is Linux. Don't remove it without asking.
-- Tests: `python -m unittest discover tests` from the repo root (only the standard library). So far they cover `song_structure/` (verse prompt → slide order), which has no third-party imports on purpose; keep new pure logic like that so it stays testable without PyQt5/Wand. Slide rendering itself is not tested: run `slidegen.py` on a song file with a temporary `DEST_DIR`.
+- Tests: `python -m unittest discover tests` from the repo root (only the standard library). So far they cover `song_structure/` (verse prompt → slide order) and `song_files/`, which has no third-party imports on purpose; keep new pure logic like that so it stays testable without PyQt5/Wand. Slide rendering itself is not tested: run `slidegen.py` on a song file with a temporary `DEST_DIR`.
 
 ## Safety
 
