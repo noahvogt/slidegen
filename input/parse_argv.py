@@ -16,7 +16,7 @@
 import argparse
 from dataclasses import dataclass
 
-from utils import log, error_msg, expand_dir
+from utils import log, error_msg, expand_dir, get_unix_milis
 
 
 def parse_slidegen_argv_as_tuple() -> tuple:
@@ -82,3 +82,18 @@ def parse_ssync_args_as_tuple() -> tuple:
 class SsyncFlags:
     offline_enabled: bool
     disable_async_enabled: bool
+
+
+def parse_unix_milis_argv() -> int:
+    """Optional time of the button press, defaults to now."""
+    parser = argparse.ArgumentParser(
+        description="note a pause start or end in the ongoing cd recording"
+    )
+    parser.add_argument(
+        "unix_milis",
+        type=int,
+        nargs="?",
+        help="unix time in milliseconds, e.g. from 'date +%%s%%3N'",
+    )
+    unix_milis = parser.parse_args().unix_milis
+    return get_unix_milis() if unix_milis is None else unix_milis

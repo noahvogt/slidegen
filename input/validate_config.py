@@ -88,6 +88,7 @@ def validate_cd_record_config() -> None:
         "CD_RECORD_FFMPEG_INPUT_ARGS": const.CD_RECORD_FFMPEG_INPUT_ARGS,
         "CD_RECORD_MAX_SECONDS": const.CD_RECORD_MAX_SECONDS,
         "CD_RECORD_MIN_TRACK_MILIS": const.CD_RECORD_MIN_TRACK_MILIS,
+        "CD_RECORD_PAUSE_GAP_SECONDS": const.CD_RECORD_PAUSE_GAP_SECONDS,
     }
     general_config_validator(needed_constants, gui_error_out=True)
 

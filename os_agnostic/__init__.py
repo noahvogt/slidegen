@@ -15,3 +15,4 @@
 
 from .cd import eject_drive, get_cd_drives, get_cdrecord_devname
 from .tasks import kill_process
+from .lock import lock_file_exclusively

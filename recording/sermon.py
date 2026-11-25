@@ -48,6 +48,7 @@ from .verify import (
     is_legal_sheet_filename,
 )
 from .gui import WaveAndSheetPreviewChooserGUI
+from .pauses import apply_pending_cd_pauses
 from .website_upload import upload_sermon_to_website, german_date, show_message
 
 
@@ -342,6 +343,7 @@ def no_cd_recording_exit(yyyy_mm_dd: str) -> None:
 def upload_sermon_for_day(yyyy_mm_dd: str, choose_manually=False):
     if not has_cd_recording_of_day(yyyy_mm_dd):
         no_cd_recording_exit(yyyy_mm_dd)
+    apply_pending_cd_pauses(yyyy_mm_dd)
     segments = get_possible_sermon_segments_of_day(yyyy_mm_dd)
     if not segments:
         no_cd_recording_exit(yyyy_mm_dd)

@@ -25,6 +25,11 @@ from .verify import (
     calc_cuesheet_timestamp,
 )
 from .cd import mark_end_of_recording, burn_cds_of_day
+from .pauses import (
+    record_cd_pause_event,
+    apply_cd_pauses_in_background,
+    apply_pending_cd_pauses,
+)
 from .gui import choose_sermon_day, choose_cd_day
 from .status_display import (
     cd_recording_status_webserver,

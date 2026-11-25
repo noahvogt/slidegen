@@ -45,6 +45,7 @@ from .verify import (
     get_padded_cd_num_from_sheet_filename,
 )
 from .gui import WaveAndSheetPreviewChooserGUI
+from .pauses import apply_pending_cd_pauses
 
 
 def get_burn_cmd(cd_drive: str, yyyy_mm_dd, padded_zfill_num: str) -> str:
@@ -160,6 +161,7 @@ def burn_and_eject_cd(
 def burn_cds_of_day(yyyy_mm_dd: str) -> None:
     validate_cd_burn_config()
     make_sure_file_exists(const.CD_RECORD_CACHEFILE, gui_error_out=True)
+    apply_pending_cd_pauses(yyyy_mm_dd)
 
     try:
         target_dir = path.join(

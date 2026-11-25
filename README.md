@@ -375,6 +375,18 @@ Instead of cycling like `next_song.py`, `force_song.py` takes an integer as sing
 
 to switch to the scene with song 4.
 
+### pause_cd_recording.py / resume_cd_recording.py
+
+Pause the CD recording, e.g. during a prayer that is too far from the microphones to be heard. Both take an optional unix time in milliseconds (`date +%s%3N`) and default to now. The recording itself keeps running, the scripts only note the offset in `pauses-<cd number>.txt` next to the cue sheet.
+
+When a CD is finished (stopped or full), each pause is cut out of its WAV and replaced by a short silence with fades, the cue sheet is shifted to match and a new track starts where the audio resumes. The file is then renamed to `pauses-<cd number>.applied.txt`. Burning and sermon uploading do the same for pause files that are still pending.
+
+```python
+CD_RECORD_PAUSE_GAP_SECONDS = 3
+```
+
+`CD_RECORD_PAUSE_GAP_SECONDS` is the length of that silence. Pauses shorter than it are ignored as accidental.
+
 ## Roadmap
 
 These are some issues and possible changes that will be addressed or at least considered by our future development efforts:

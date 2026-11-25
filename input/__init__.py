@@ -23,6 +23,7 @@ from .parse_argv import (
     parse_ssync_args_as_tuple,
     parse_slidegen_argv_as_tuple,
     SsyncFlags,
+    parse_unix_milis_argv,
 )
 from .validate_config import (
     validate_ssync_config,

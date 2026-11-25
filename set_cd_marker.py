@@ -43,6 +43,7 @@ from recording import (
     mark_end_of_recording,
     ongoing_cd_recording_detected,
     calc_cuesheet_timestamp,
+    apply_cd_pauses_in_background,
 )
 
 
@@ -111,6 +112,8 @@ def start_cd_recording() -> None:
         )
 
         _ = process.communicate()[0]  # wait for subprocess to end
+        if process.returncode in [255, 0]:
+            apply_cd_pauses_in_background(yyyy_mm_dd, cd_num)
         cachefile_content = get_cachefile_content(const.CD_RECORD_CACHEFILE)
         cd_num += 1
         if process.returncode not in [255, 0]:
