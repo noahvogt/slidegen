@@ -35,6 +35,7 @@ else:
     from pycdio import DRIVER_DEVICE
     from cdio import (
         get_devices,
+        Device,
         DriverUnsupportedError,
         DeviceException,
     )
@@ -126,10 +127,9 @@ def get_cd_drives() -> list[str]:
             cd_drives.append(cd.Drive)
     # pylint: disable=possibly-used-before-assignment
     else:
-        raw_cd_drives = get_devices(DRIVER_DEVICE)
         cd_drives = []
-        for cd in raw_cd_drives:
-            cd_drives.append(str(cd.get_device()))
+        for cd in get_devices(DRIVER_DEVICE):
+            cd_drives.append(cd if isinstance(cd, str) else cd.get_device())
     return cd_drives
 
 
@@ -139,19 +139,10 @@ def eject_drive(drive: str) -> None:  # pyright: ignore
         ctypes.windll.WINMM.mciSendStringW(
             f"open {drive} type cdaudio alias d_drive", None, 0, None
         )
-        ctypes.windll.WINMM.mciSendStringW(
-            "set d_drive door open", None, 0, None
-        )
+        ctypes.windll.WINMM.mciSendStringW("set d_drive door open", None, 0, None)
     else:
         try:
-            raw_drives = get_devices(DRIVER_DEVICE)
-            drive_ejected = False
-            for cd in raw_drives:
-                if str(cd.get_device()) == drive:
-                    drive.eject_media()  # pyright: ignore
-                    drive_ejected = True
-            if not drive_ejected:
-                raise CustomException(f"Drive {drive} not found")
+            Device(drive).eject_media()
         # pylint: disable=possibly-used-before-assignment
-        except (DriverUnsupportedError, DeviceException, CustomException):
-            log(f"Eject of CD-ROM drive {drive} failed")  # pyright: ignore
+        except (DriverUnsupportedError, DeviceException) as error:
+            log(f"Eject of CD-ROM drive {drive} failed: {error}")
